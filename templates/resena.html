@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Agregar Reseña - RetroNintendo</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/estilos.css') }}">
+    <style>
+        .review-form {
+            background-color: #222;
+            padding: 30px;
+            border-radius: 8px;
+            max-width: 600px;
+            margin: 0 auto;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            color: #ffcc00;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 10px;
+            border-radius: 5px;
+            border: none;
+            background-color: #333;
+            color: #fff;
+            font-size: 1.1em;
+        }
+
+        .form-control:focus {
+            outline: none;
+            box-shadow: 0 0 8px rgba(255, 204, 0, 0.8);
+        }
+
+        .btn {
+            width: 100%;
+            padding: 12px;
+            background-color: #e50914;
+            color: #fff;
+            border: none;
+            border-radius: 5px;
+            font-size: 1.2em;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+
+        .btn:hover {
+            background-color: #b20710;
+            transform: scale(1.05);
+        }
+
+        .btn-primary {
+    background-color: #007bff;
+    margin-top: 20px;
+    padding: 5px 10px; /* Reducir el padding */
+    font-size: 0.9em; /* Tamaño de fuente más pequeño */
+    width: auto; /* Ajuste de ancho automático en lugar de ocupar todo el espacio */
+}
+
+.btn-primary:hover {
+    background-color: #0056b3;
+}
+
+
+        .hero-content {
+            text-align: center;
+            padding: 50px 0;
+        }
+
+        .games-container {
+            display: flex;
+            justify-content: center;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        /* Alinear el botón de Inicio más a la derecha */
+        nav ul {
+            display: flex;
+            justify-content: flex-end;
+            list-style-type: none;
+        }
+
+        nav ul li {
+            margin-left: 20px;
+        }
+
+        nav ul li a {
+            color: #fff;
+            text-decoration: none;
+            font-size: 1.2em;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="logo">
+            <a href="{{ url_for('index') }}">
+                <img src="{{ url_for('static', filename='media/RetroNintendoLogo.jpeg') }}" alt="Logo de RetroNintendo">
+            </a>
+        </div>
+        <button class="hamburger" onclick="toggleMenu()">
+            <span></span>
+            <span></span>
+            <span></span>
+        </button>
+        <nav>
+            <ul id="navMenu">
+                <li><a href="{{ url_for('index') }}">Inicio</a></li>
+            </ul>
+        </nav>
+        <div class="menu-overlay" onclick="toggleMenu()"></div>
+    </header>
+
+    <main>
+        <section class="hero">
+            <div class="hero-content">
+                <h1>Agregar Reseña de Videojuego</h1>
+                <p>¡Comparte tu opinión sobre los juegos que amas!</p>
+            </div>
+        </section>
+
+        <!-- Formulario para agregar la reseña -->
+        <section class="featured-games">
+            <h2>Escribe tu Reseña</h2>
+            <div class="games-container">
+                <form action="/agregar-resena" method="POST" class="review-form">
+                    <div class="form-group">
+                        <label for="nombre_juego">Nombre del Juego:</label>
+                        <input type="text" id="nombre_juego" name="nombre_juego" class="form-control" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="resena">Reseña:</label>
+                        <textarea id="resena" name="resena" rows="5" class="form-control" required></textarea>
+                    </div>
+                    <button type="submit" class="btn">Guardar Reseña</button>
+                </form>
+
+                <!-- Botón para ver todas las reseñas -->
+                <a href="{{ url_for('ver_resenas') }}" class="btn btn-primary">Ver Reseñas</a>
+            </div>
+        </section>
+    </main>
+
+    <footer>
+        <p>&copy; 2024 RetroNintendo - Todos los derechos reservados.</p>
+    </footer>
+
+    <script>
+        function toggleMenu() {
+            const menu = document.getElementById('navMenu');
+            const hamburger = document.querySelector('.hamburger');
+            const overlay = document.querySelector('.menu-overlay');
+            
+            menu.classList.toggle('show');
+            hamburger.classList.toggle('active');
+            overlay.classList.toggle('show');
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RetroNintendo - Tienda Virtual</title>
+
+    <!-- Enlace para Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/estilos.css') }}">
+
+    <style>
+        /* Estilos generales del cuerpo */
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #000;
+            color: #fff;
+            margin: 0;
+            padding: 0;
+        }
+
+        /* Estilos para el header y el logo */
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px;
+            background-color: #e50914; /* Fondo rojo Nintendo */
+        }
+
+        .logo img {
+            height: 100px; /* Tamaño del logo aumentado */
+        }
+
+        /* Nombre de la tienda más llamativo con letras blancas */
+        .store-name {
+            font-size: 2.8em;
+            color: #fff; /* Texto blanco */
+            font-weight: bold;
+            text-shadow: 3px 3px 8px rgba(0, 0, 0, 0.6); /* Sombra de texto para profundidad */
+            letter-spacing: 2px; /* Espaciado entre letras */
+            font-family: 'Arial Black', sans-serif;
+        }
+
+        /* Estilos para el mensaje de usuario */
+        .user-message {
+            color: #fff; /* Texto blanco */
+            font-size: 1.2em;
+            margin-right: 20px;
+        }
+
+        .user-message p {
+            margin: 0;
+            font-size: 1em;
+        }
+
+        /* Hero section */
+        .hero {
+            background-color: #1b1b1b;
+            text-align: center;
+            padding: 50px 20px;
+        }
+
+        .hero h1 {
+            color: #ffcc00;
+            font-size: 3em;
+        }
+
+        .hero p {
+            font-size: 1.2em;
+            color: #fff; /* Texto blanco */
+        }
+
+        .btn {
+            background-color: #e50914; /* Rojo Nintendo */
+            color: #fff;
+            padding: 15px 30px;
+            text-decoration: none;
+            font-size: 1.2em;
+            border-radius: 5px;
+            margin-top: 20px;
+            display: inline-block;
+        }
+
+        .btn:hover {
+            background-color: #b20710; /* Rojo más oscuro */
+        }
+
+        /* Estilos para la sección central de íconos */
+        .icon-section {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            padding: 40px;
+            text-align: center;
+        }
+
+        .icon-section div {
+            margin: 20px;
+            width: 120px;
+            color: #fff; /* Texto blanco para íconos */
+        }
+
+        .icon-section div i {
+            font-size: 3em;
+            margin-bottom: 10px;
+        }
+
+        .icon-section div span {
+            display: block;
+            margin-top: 10px;
+            font-size: 1.1em;
+            color: #fff; /* Texto blanco */
+        }
+
+        /* Responsividad */
+        @media (max-width: 768px) {
+            .icon-section div {
+                width: 80px;
+            }
+
+            .icon-section div i {
+                font-size: 2.5em;
+            }
+
+            .icon-section div span {
+                font-size: 1em;
+            }
+        }
+
+        /* Estilos para misión, visión y reseña histórica */
+        .mission-vision, .history {
+            padding: 40px;
+            background-color: #1b1b1b;
+            color: #fff;
+            text-align: center;
+        }
+
+        .mission-vision h3, .history h2 {
+            color: #ffcc00;
+            margin-bottom: 20px;
+        }
+
+        .mission, .vision {
+            margin-bottom: 20px;
+        }
+
+        /* Estilos para los videos en horizontal */
+        .video-section {
+            padding: 40px;
+            text-align: center;
+        }
+
+        .row {
+            display: flex;
+            justify-content: space-between;
+            flex-wrap: wrap;
+        }
+
+        .video-wrapper {
+            width: 100%;
+            max-width: 320px;
+            margin: 0 10px;
+        }
+
+        iframe {
+            width: 100%;
+            height: 180px;
+        }
+
+        /* Responsividad para videos */
+        @media (max-width: 768px) {
+            .row {
+                flex-direction: column;
+                align-items: center;
+            }
+
+            .video-wrapper {
+                margin-bottom: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="logo">
+            <a href="{{ url_for('index') }}">
+                <img src="{{ url_for('static', filename='media/RetroNintendoLogo.jpeg') }}" alt="Logo de RetroNintendo">
+            </a>
+        </div>
+
+        <!-- Nombre de la tienda en el header con letras blancas -->
+        <div class="store-name">RetroNintendo Store</div>
+
+        <!-- Agregar mensaje de usuario loggeado a la derecha -->
+        <div class="user-message">
+            {% if nombre_usuario %}
+                <p>¡Hola, {{ nombre_usuario }}!</p>
+                <a href="{{ url_for('logout') }}" style="color:#fff;"><i class="fas fa-sign-out-alt"></i> Cerrar Sesión</a>
+            {% else %}
+                <a href="{{ url_for('login') }}" style="color:#fff;"><i class="fas fa-sign-in-alt"></i> Log in</a>
+            {% endif %}
+        </div>
+    </header>
+
+    <main>
+        <!-- Hero Section -->
+        <section class="hero">
+            <div class="hero-content">
+                <h1>Bienvenido a la tienda de juegos clásicos de Nintendo</h1>
+                <p>Reviví los mejores momentos de tu infancia con nuestra selección de juegos clásicos.</p>
+                <a href="{{ url_for('catalogo') }}" class="btn">Ver Catálogo</a>
+            </div>
+        </section>
+
+        <!-- Sección central con íconos -->
+        <section class="icon-section">
+            <div><a href="{{ url_for('index') }}"><i class="fas fa-home"></i></a><span>Inicio</span></div>
+            <div><a href="{{ url_for('catalogo') }}"><i class="fas fa-book"></i></a><span>Catálogo</span></div>
+            <div><a href="{{ url_for('gestor_ordenes') }}"><i class="fas fa-clipboard-list"></i></a><span>Órdenes</span></div>
+            <div><a href="{{ url_for('pedidos_express') }}"><i class="fas fa-truck"></i></a><span>Pedidos</span></div>
+            <div><a href="{{ url_for('reporte_ventas') }}"><i class="fas fa-chart-line"></i></a><span>Ventas</span></div>
+            <div><a href="{{ url_for('agregar_resena') }}"><i class="fas fa-star"></i></a><span>Reseñas</span></div>
+            <div><a href="{{ url_for('enviar_mensaje') }}"><i class="fas fa-envelope"></i></a><span>Contacto</span></div>
+            <div><a href="{{ url_for('acerca_de') }}"><i class="fas fa-info-circle"></i></a><span>Acerca de</span></div>
+            <div><a href="{{ url_for('auditoria') }}"><i class="fas fa-user-shield"></i></a><span>Auditoría</span></div>
+            <div><a href="{{ url_for('ver_solicitudes_cotizacion') }}"><i class="fas fa-file-invoice-dollar"></i></a><span>Solicitudes de Cotización</span></div>
+            <div><a href="{{ url_for('consultar_identificacion') }}"><i class="fas fa-id-card"></i></a><span>Verificación de Identificación</span></div>
+            <div><a href="{{ url_for('mostrar_videojuegos_proveedor') }}"><i class="fas fa-gamepad"></i></a><span>Proveedor de Videojuegos</span></div>
+            <div><a href="{{ url_for('rastrear_paquete') }}"><i class="fas fa-shipping-fast"></i></a><span>Rastreo de Paquetes</span></div>
+            <div><a href="{{ url_for('comparar_precios') }}"><i class="fas fa-balance-scale"></i></a><span>Comparar Precios</span></div>
+            <div><a href="{{ url_for('tipo_cambio') }}"><i class="fas fa-dollar-sign"></i></a><span>Tipo de Cambio</span></div>
+        </section>
+
+        <!-- Sección Histórica -->
+        <section class="history">
+            <h2>Reseña Histórica de la Empresa</h2>
+            <p>Retro Nintendo Store nació en 2024 como una respuesta a la creciente demanda de videojuegos clásicos que marcaron la infancia de muchos jugadores. Inspirados por la nostalgia y el legado de Nintendo, decidimos crear una plataforma en línea accesible para aquellos que querían revivir esos momentos mágicos. Inicialmente, la tienda solo estaba disponible en la web, pero pronto se expandió a dispositivos móviles. Nuestro objetivo siempre ha sido mantener la esencia de los clásicos mientras ofrecemos una experiencia de compra moderna.</p>
+        </section>
+
+        <!-- Misión y Visión -->
+        <section class="mission-vision">
+            <div class="mission">
+                <h3>Misión</h3>
+                <p>Ofrecer a los apasionados de los videojuegos clásicos la oportunidad de revivir experiencias icónicas de Nintendo, brindando acceso a juegos de calidad, con un servicio rápido y confiable, tanto en línea como en dispositivos móviles.</p>
+            </div>
+            <div class="vision">
+                <h3>Visión</h3>
+                <p>Convertirnos en la tienda líder en la venta de videojuegos clásicos de Nintendo, expandiendo nuestro catálogo y servicios, creando una comunidad vibrante de fanáticos nostálgicos y adaptándonos a las tecnologías emergentes para asegurar la satisfacción del cliente en todo momento.</p>
+            </div>
+        </section>
+
+        <!-- Próximas Novedades -->
+        <section class="video-section">
+            <h2>Próximas Novedades</h2>
+            <div class="row">
+                <div class="video-wrapper">
+                    <h3>Metroid Prime 4 Beyond</h3>
+                    <iframe src="https://www.youtube.com/embed/mMAgmdR8jwU" allowfullscreen></iframe>
+                </div>
+                <div class="video-wrapper">
+                    <h3>The Legend of Zelda: Echoes of Wisdom</h3>
+                    <iframe src="https://www.youtube.com/embed/fb4__RzOVNs" allowfullscreen></iframe>
+                </div>
+                <div class="video-wrapper">
+                    <h3>Mario & Luigi: Brothership</h3>
+                    <iframe src="https://www.youtube.com/embed/s5I3DcapElQ" allowfullscreen></iframe>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer>
+        <p>&copy; 2024 RetroNintendo - Todos los derechos reservados.</p>
+    </footer>
+
+</body>
+</html>

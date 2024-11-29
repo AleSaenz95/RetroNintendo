@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Completar Pedido - RetroNintendo</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/estilos.css') }}">
+    <style>
+        /* Estilos generales */
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #000;
+            color: #fff;
+            margin: 0;
+            padding: 0;
+        }
+
+        h1 {
+            text-align: center;
+            color: #ffcc00;
+            margin-top: 30px;
+        }
+
+        .contenedor {
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #111;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+        }
+
+        label, input {
+            display: block;
+            width: 100%;
+            margin-bottom: 15px;
+        }
+
+        input[type="text"], input[type="submit"] {
+            padding: 10px;
+            border-radius: 5px;
+            border: none;
+        }
+
+        input[type="submit"] {
+            background-color: #ffcc00;
+            color: #000;
+            cursor: pointer;
+        }
+
+        input[type="submit"]:hover {
+            background-color: #e5b800;
+        }
+
+        .btn-volver {
+            display: block;
+            text-align: center;
+            padding: 15px;
+            background-color: #ffcc00;
+            color: #000;
+            text-decoration: none;
+            border-radius: 5px;
+            margin-top: 20px;
+        }
+
+        .btn-volver:hover {
+            background-color: #e5b800;
+        }
+    </style>
+</head>
+<body>
+    <h1>Completar Pedido</h1>
+    <div class="contenedor">
+        <form action="/confirmar_completado" method="POST">
+            <input type="hidden" name="express_order_id" value="{{ express_order_id }}">
+            <label for="quien_recibe">¿Quién recibe el pedido?</label>
+            <input type="text" id="quien_recibe" name="quien_recibe" placeholder="Nombre de quien recibe" required>
+            <input type="submit" value="Completar Envío">
+        </form>
+
+        <a href="{{ url_for('pedidos_express') }}" class="btn-volver">Volver a Pedidos Express</a>
+    </div>
+</body>
+</html>

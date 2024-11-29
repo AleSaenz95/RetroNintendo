@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Catálogo - RetroNintendo</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/estilos.css') }}">
+    <style>
+        /* Estilo general de la página */
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #000; /* Fondo negro */
+            color: #fff; /* Texto blanco */
+            margin: 0;
+            padding: 0;
+        }
+
+        /* Contenedor del catálogo */
+        .catalogo {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        /* Estilo de cada producto */
+        .producto {
+            display: flex;
+            background-color: #111; /* Fondo oscuro para el contenedor de producto */
+            margin-bottom: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            padding: 15px;
+            align-items: center;
+        }
+
+        .producto img {
+            width: 150px;
+            height: auto;
+            border-radius: 10px;
+            margin-right: 20px;
+        }
+
+        .info {
+            display: flex;
+            flex-direction: column;
+            width: 100%;
+        }
+
+        .info h3 {
+            font-size: 1.5em;
+            color: #ffcc00; /* Amarillo Nintendo */
+            margin-bottom: 10px;
+        }
+
+        .info p {
+            font-size: 1em;
+            margin-bottom: 10px;
+            color: #ccc;
+        }
+
+        .precio {
+            font-size: 1.4em;
+            color: #e50914; /* Rojo Nintendo */
+            margin-bottom: 10px;
+        }
+
+        .stock {
+            font-size: 0.9em;
+            color: #ffcc00; /* Amarillo para resaltar stock */
+        }
+
+        .btn-comprar {
+            padding: 10px 15px;
+            background-color: #e50914; /* Botón rojo Nintendo */
+            color: #fff;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 1em;
+            transition: background-color 0.3s ease;
+        }
+
+        .btn-comprar:hover {
+            background-color: #b20710; /* Rojo más oscuro al pasar el cursor */
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="logo">
+            <a href="{{ url_for('index') }}">
+                <img src="{{ url_for('static', filename='media/RetroNintendoLogo.jpeg') }}" alt="Logo de RetroNintendo">
+            </a>
+        </div>
+        <nav>
+            <ul id="navMenu">
+                <li><a href="{{ url_for('index') }}">Inicio</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <main>
+        <div class="catalogo">
+            {% for articulo in articulos %}
+            <div class="producto">
+                <!-- Mostrar la imagen correspondiente según el item_id -->
+                {% if articulo[0] == 1 %}
+                    <img src="{{ url_for('static', filename='media/ZeldaOca.jpg') }}" alt="The Legend of Zelda: Ocarina of Time">
+                {% elif articulo[0] == 2 %}
+                    <img src="{{ url_for('static', filename='media/marioworld.jpg') }}" alt="Super Mario World">
+                {% elif articulo[0] == 3 %}
+                    <img src="{{ url_for('static', filename='media/Donkey_Kong_Country_SNES_cover.png') }}" alt="Donkey Kong Country">
+                {% endif %}
+                <div class="info">
+                    <h3>{{ articulo[1] }}</h3> <!-- Nombre del artículo -->
+                    <p>{{ articulo[2] }}</p>   <!-- Descripción -->
+                    <div class="precio">$ {{ articulo[3] }}</div> <!-- Precio -->
+                    <div class="stock">Quedan {{ articulo[4] }} en stock</div> <!-- Cantidad disponible -->
+
+                    <!-- Botón comprar que redirige al formulario de compra con el item_id -->
+                    <a href="{{ url_for('comprar', item_id=articulo[0]) }}">
+                        <button class="btn-comprar">Comprar</button>
+                    </a>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </main>
+
+    <footer>
+        <p>&copy; 2024 RetroNintendo - Todos los derechos reservados.</p>
+    </footer>
+</body>
+</html>

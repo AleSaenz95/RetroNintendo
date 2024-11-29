@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Registro - RetroNintendo</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/estilos.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #000;
+            color: #fff;
+            margin: 0;
+            padding: 0;
+        }
+
+        .register-container {
+            max-width: 400px;
+            margin: 100px auto;
+            padding: 20px;
+            background-color: #111;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+        }
+
+        h1 {
+            text-align: center;
+            color: #ffcc00;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 10px;
+            font-size: 1.2em;
+        }
+
+        .input-group {
+            position: relative;
+            display: flex;
+            align-items: center;
+        }
+
+        input[type="text"], input[type="email"], input[type="password"], select {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 20px;
+            border-radius: 5px;
+            border: 1px solid #444;
+            background-color: #222;
+            color: #fff;
+        }
+
+        .input-group i {
+            position: absolute;
+            right: 10px;
+            cursor: pointer;
+            color: #ffcc00;
+        }
+
+        input[type="submit"] {
+            width: 100%;
+            padding: 15px;
+            background-color: #e50914;
+            color: #fff;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 1.2em;
+            transition: background-color 0.3s ease;
+        }
+
+        input[type="submit"]:hover {
+            background-color: #b20710;
+        }
+
+        .password-requirements {
+            font-size: 0.9em;
+            color: #ffcc00;
+            margin-bottom: 20px;
+            list-style-type: disc;
+            padding-left: 20px;
+        }
+
+        p {
+            text-align: center;
+            margin-top: 10px;
+        }
+
+        a {
+            color: #ffcc00;
+        }
+
+        .logo {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 20px;
+        }
+
+        .logo img {
+            width: 100px;
+        }
+    </style>
+</head>
+<body>
+    <div class="register-container">
+        <div class="logo">
+            <a href="{{ url_for('index') }}">
+                <img src="{{ url_for('static', filename='media/RetroNintendoLogo.jpeg') }}" alt="Logo de RetroNintendo">
+            </a>
+        </div>
+        <h1>Registro de Usuario</h1>
+        <form action="/registro" method="POST" onsubmit="return validarContrasena()">
+            <label for="nombre_usuario">Nombre de Usuario:</label>
+            <input type="text" id="nombre_usuario" name="nombre_usuario" required>
+
+            <label for="identificacion">Identificación:</label>
+            <input type="text" id="identificacion" name="identificacion" required>
+
+            <label for="correo">Correo Electrónico:</label>
+            <input type="email" id="correo" name="correo" required>
+
+            <label for="password">Contraseña:</label>
+            <div class="input-group">
+                <input type="password" id="password" name="password" required>
+                <i class="fas fa-eye" id="togglePassword"></i>
+            </div>
+
+            <ul class="password-requirements">
+                <li>Debe tener entre 8 y 14 caracteres.</li>
+                <li>Debe incluir al menos un carácter especial (ej. @, #, $, %).</li>
+                <li>Debe contener al menos una letra mayúscula y un número.</li>
+            </ul>
+
+            <!-- Combobox dinámicos con AJAX -->
+            <label for="pais">País:</label>
+            <select id="pais" name="pais" required>
+                <option value="">Seleccione un país</option>
+                <option value="Costa Rica">Costa Rica</option>
+            </select>
+
+            <label for="provincia">Provincia:</label>
+            <select id="provincia" name="provincia" required>
+                <option value="">Seleccione una provincia</option>
+            </select>
+
+            <label for="canton">Cantón:</label>
+            <select id="canton" name="canton" required>
+                <option value="">Seleccione un cantón</option>
+            </select>
+
+            <label for="distrito">Distrito:</label>
+            <select id="distrito" name="distrito" required>
+                <option value="">Seleccione un distrito</option>
+            </select>
+
+            <!-- Respuestas de seguridad -->
+            <label for="respuesta1">Respuesta 1: ¿Cuál es tu color favorito?</label>
+            <input type="text" id="respuesta1" name="respuesta1" required>
+
+            <label for="respuesta2">Respuesta 2: ¿Cuál es tu juego favorito?</label>
+            <input type="text" id="respuesta2" name="respuesta2" required>
+
+            <label for="respuesta3">Respuesta 3: ¿Dónde vives?</label>
+            <input type="text" id="respuesta3" name="respuesta3" required>
+
+            <input type="submit" value="Registrarse">
+        </form>
+
+        <p>¿Ya tienes una cuenta? <a href="{{ url_for('login') }}">Inicia sesión aquí</a></p>
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script>
+        // Validar contraseña
+        function validarContrasena() {
+            const password = document.getElementById('password').value;
+            const regex = /^(?=.*[A-Z])(?=.*\d)(?=.*[@#$%])[A-Za-z\d@#$%]{8,14}$/;
+
+            if (!regex.test(password)) {
+                alert("La contraseña no cumple con los requisitos. Asegúrate de que tenga entre 8 y 14 caracteres, al menos un carácter especial, una letra mayúscula y un número.");
+                return false;
+            }
+            return true;
+        }
+
+        const togglePassword = document.getElementById('togglePassword');
+        const passwordInput = document.getElementById('password');
+
+        togglePassword.addEventListener('click', function () {
+            const type = passwordInput.getAttribute('type') === 'password' ? 'text' : 'password';
+            passwordInput.setAttribute('type', type);
+            this.classList.toggle('fa-eye-slash');
+        });
+
+        // AJAX para los combobox
+        
+        // Cargar provincias al seleccionar un país
+$('#pais').on('change', function() {
+    const pais = $(this).val();
+    if (pais) {
+        $.ajax({
+            url: '/get_provincias',
+            type: 'GET',
+            data: { pais: pais },
+            success: function(data) {
+                // Limpiar y llenar el menú de provincias
+                $('#provincia').empty().append('<option value="">Seleccione una provincia</option>');
+                $.each(data, function(index, item) {
+                    $('#provincia').append(`<option value="${item.provincia}">${item.provincia}</option>`);
+                });
+                $('#canton').empty().append('<option value="">Seleccione un cantón</option>');
+                $('#distrito').empty().append('<option value="">Seleccione un distrito</option>');
+            },
+            error: function() {
+                alert("Error al cargar provincias.");
+            }
+        });
+    } else {
+        $('#provincia').empty().append('<option value="">Seleccione una provincia</option>');
+        $('#canton').empty().append('<option value="">Seleccione un cantón</option>');
+        $('#distrito').empty().append('<option value="">Seleccione un distrito</option>');
+    }
+});
+
+// Cargar cantones al seleccionar una provincia
+$('#provincia').on('change', function() {
+    const provincia = $(this).val();
+    if (provincia) {
+        $.ajax({
+            url: '/get_cantones',
+            type: 'GET',
+            data: { provincia: provincia },
+            success: function(data) {
+                $('#canton').empty().append('<option value="">Seleccione un cantón</option>');
+                $.each(data, function(index, item) {
+                    $('#canton').append(`<option value="${item.canton}">${item.canton}</option>`);
+                });
+                $('#distrito').empty().append('<option value="">Seleccione un distrito</option>');
+            },
+            error: function() {
+                alert("Error al cargar cantones.");
+            }
+        });
+    } else {
+        $('#canton').empty().append('<option value="">Seleccione un cantón</option>');
+        $('#distrito').empty().append('<option value="">Seleccione un distrito</option>');
+    }
+});
+
+// Cargar distritos al seleccionar un cantón
+$('#canton').on('change', function() {
+    const canton = $(this).val();
+    if (canton) {
+        $.ajax({
+            url: '/get_distritos',
+            type: 'GET',
+            data: { canton: canton },
+            success: function(data) {
+                $('#distrito').empty().append('<option value="">Seleccione un distrito</option>');
+                $.each(data, function(index, item) {
+                    $('#distrito').append(`<option value="${item.distrito}">${item.distrito}</option>`);
+                });
+            },
+            error: function() {
+                alert("Error al cargar distritos.");
+            }
+        });
+    } else {
+        $('#distrito').empty().append('<option value="">Seleccione un distrito</option>');
+    }
+});
+
+</script>
+</body>
+</html>

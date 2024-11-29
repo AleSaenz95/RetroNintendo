@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tipo de Cambio</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/estilos.css') }}">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #000;
+            color: #fff;
+            margin: 0;
+            padding: 0;
+            text-align: center;
+        }
+
+        h1 {
+            color: #ffcc00;
+            font-size: 2.5em;
+            margin-top: 30px;
+        }
+
+        .tipo-cambio-container {
+            background-color: #111;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.5);
+            display: inline-block;
+            padding: 30px;
+            margin-top: 50px;
+            width: 80%;
+            max-width: 400px;
+        }
+
+        .tipo-cambio-container p {
+            font-size: 1.5em;
+            color: #ffcc00;
+            margin: 10px 0;
+        }
+
+        /* Estilo del botón de volver */
+        .btn-volver {
+            display: inline-block;
+            background-color: #e50914;
+            color: #fff;
+            text-decoration: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            margin-top: 30px; /* Mayor espacio para separar el botón del contenido */
+            font-size: 1.2em;
+            transition: background-color 0.3s ease;
+        }
+
+        .btn-volver:hover {
+            background-color: #b20710;
+        }
+    </style>
+</head>
+<body>
+    <h1>Tipo de Cambio</h1>
+    <div class="tipo-cambio-container">
+        {% if tipo_cambio %}
+            <p>Tipo de Cambio de Venta: ₡{{ tipo_cambio }}</p>
+        {% else %}
+            <p>Información no disponible</p>
+        {% endif %}
+    </div>
+    
+    <!-- Botón para volver al inicio, colocado debajo del contenedor de tipo de cambio -->
+    <div>
+        <a href="{{ url_for('index') }}" class="btn-volver">Volver al Inicio</a>
+    </div>
+</body>
+</html>

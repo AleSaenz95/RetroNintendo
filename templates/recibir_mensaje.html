@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Enviar Mensaje - RetroNintendo</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/estilos.css') }}">
+    <style>
+        /* Estilos generales del cuerpo */
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #000;
+            color: #fff;
+            margin: 0;
+            padding: 0;
+        }
+
+        /* Estilos del contenedor principal */
+        .form-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh; /* Altura completa de la ventana */
+        }
+
+        .form-wrapper {
+            background-color: #222;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+            width: 100%;
+            max-width: 500px; /* Ancho máximo */
+            text-align: center;
+        }
+
+        h2 {
+            color: #ffcc00;
+            margin-bottom: 20px;
+        }
+
+        p {
+            color: #ccc;
+            margin-bottom: 20px;
+            font-size: 1.1em;
+        }
+
+        /* Estilos para los campos de texto */
+        .form-control {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 20px;
+            border-radius: 5px;
+            border: none;
+            background-color: #333;
+            color: #fff;
+            font-size: 1em;
+            transition: border-color 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .form-control:focus {
+            outline: none;
+            border-color: #e50914; /* Color rojo para enfocar */
+            box-shadow: 0 0 10px rgba(229, 9, 20, 0.5); /* Sombra roja */
+        }
+
+        /* Botón estilizado */
+        .btn {
+            padding: 10px 20px;
+            background-color: #e50914;
+            color: #fff;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 1.1em;
+            transition: background-color 0.3s ease, transform 0.3s ease;
+        }
+
+        .btn:hover {
+            background-color: #b20710;
+            transform: scale(1.05);
+        }
+
+        /* Botón pequeño para ver mensajes */
+        .btn-primary {
+            background-color: #007bff;
+            padding: 8px 15px;
+            font-size: 0.9em;
+            display: inline-block;
+            margin-top: 20px;
+        }
+
+        .btn-primary:hover {
+            background-color: #0056b3;
+        }
+
+        /* Estilos para el header */
+        nav ul {
+            display: flex;
+            gap: 15px;
+        }
+
+        nav ul li a {
+            text-decoration: none;
+            color: #fff;
+            font-weight: bold;
+            padding: 10px 15px;
+            background-color: #e50914;
+            border-radius: 5px;
+            transition: background-color 0.3s ease;
+        }
+
+        nav ul li a:hover {
+            background-color: #b20710;
+        }
+
+    </style>
+</head>
+<body>
+    <header>
+        <div class="logo">
+            <a href="{{ url_for('index') }}">
+                <img src="{{ url_for('static', filename='media/RetroNintendoLogo.jpeg') }}" alt="Logo de RetroNintendo">
+            </a>
+        </div>
+    </header>
+
+    <main>
+        <section class="form-container">
+            <div class="form-wrapper">
+                <h2>Contactanos</h2>
+                <p>Deja tu mensaje en el formulario a continuación, y nos pondremos en contacto con vos!.</p>
+                <form action="/enviar-mensaje" method="POST">
+                    <input type="text" id="nombre" name="nombre" class="form-control" placeholder="Nombre" required>
+                    <input type="email" id="correo" name="correo" class="form-control" placeholder="Correo" required>
+                    <textarea id="mensaje" name="mensaje" rows="5" class="form-control" placeholder="Mensaje" required></textarea>
+                    <button type="submit" class="btn">Enviar Mensaje</button>
+                </form>
+                <a href="{{ url_for('ver_mensajes') }}" class="btn-primary">Ver Mensajes</a>
+            </div>
+        </section>
+    </main>
+
+    <footer>
+        <p>&copy; 2024 RetroNintendo - Todos los derechos reservados.</p>
+    </footer>
+</body>
+</html>

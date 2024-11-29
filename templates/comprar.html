@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Formulario de Compra</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/estilos.css') }}">
+    <style>
+        /* Estilos generales */
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #000;
+            color: #fff;
+            margin: 0;
+            padding: 0;
+        }
+
+        h1 {
+            text-align: center;
+            color: #ffcc00;
+            margin-top: 30px;
+        }
+
+        /* Estilos del formulario */
+        .formulario-compra {
+            max-width: 600px;
+            margin: 0 auto;
+            background-color: #111;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+        }
+
+        .formulario-compra label {
+            display: block;
+            font-size: 1.1em;
+            margin-bottom: 10px;
+            color: #ffcc00;
+        }
+
+        .formulario-compra input, .formulario-compra select {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 20px;
+            border-radius: 5px;
+            border: 1px solid #444;
+            background-color: #222;
+            color: #fff;
+        }
+
+        .formulario-compra input[readonly] {
+            background-color: #333;
+        }
+
+        .direccion-express {
+            display: none;
+            margin-top: 20px;
+        }
+
+        .formulario-compra input[type="submit"] {
+            width: 100%;
+            padding: 15px;
+            background-color: #e50914;
+            color: #fff;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 1.2em;
+            transition: background-color 0.3s ease;
+        }
+
+        .formulario-compra input[type="submit"]:hover {
+            background-color: #b20710;
+        }
+
+        .btn-volver {
+            display: block;
+            width: 100%;
+            text-align: center;
+            padding: 15px;
+            background-color: #ffcc00;
+            color: #000;
+            text-decoration: none;
+            border-radius: 5px;
+            margin-top: 10px;
+            transition: background-color 0.3s ease;
+        }
+
+        .btn-volver:hover {
+            background-color: #e5b800;
+        }
+
+        @media (max-width: 768px) {
+            .formulario-compra {
+                width: 90%;
+                padding: 15px;
+            }
+
+            h1 {
+                font-size: 1.5em;
+            }
+        }
+    </style>
+</head>
+<body>
+    <h1>Formulario de Compra</h1>
+    <div class="formulario-compra">
+        <form action="/comprar" method="POST">
+            <label for="nombre">Nombre del Cliente:</label>
+            <input type="text" id="nombre" name="cliente_nombre" required>
+
+            <label for="producto">Producto Seleccionado:</label>
+            <input type="text" id="producto" name="producto_nombre" value="{{ producto_nombre }}" readonly>
+
+            <label for="tipo_orden">Tipo de Orden:</label>
+            <select id="tipo_orden" name="tipo_orden" required onchange="mostrarDireccion(this.value)">
+                <option value="Recoger en Tienda">Recoger en Tienda</option>
+                <option value="Envío Express">Envío Express</option>
+            </select>
+
+            <!-- Campo de dirección que solo se muestra si es Envío Express -->
+            <div class="direccion-express" id="direccion-entrega">
+                <label for="direccion">Dirección de Entrega:</label>
+                <input type="text" id="direccion" name="direccion_entrega">
+            </div>
+
+            <label for="total">Total:</label>
+            <input type="number" id="total" name="total" value="{{ producto_precio }}" readonly>
+
+            <!-- Información de tarjeta para el pago -->
+            <label for="numero_tarjeta">Número de Tarjeta:</label>
+            <input type="text" id="numero_tarjeta" name="numero_tarjeta" maxlength="16" required>
+
+            <label for="fecha_vencimiento">Fecha de Vencimiento (MM/YY):</label>
+            <input type="text" id="fecha_vencimiento" name="fecha_vencimiento" placeholder="MM/YY" maxlength="5" oninput="formatearFechaVencimiento()" required>
+
+            <label for="codigo_seguridad">Código de Seguridad:</label>
+            <input type="text" id="codigo_seguridad" name="codigo_seguridad" maxlength="3" required>
+
+            <input type="submit" value="Procesar Orden">
+        </form>
+
+        <!-- Botón para volver al index -->
+        <a href="{{ url_for('index') }}" class="btn-volver">Volver al Inicio</a>
+    </div>
+
+    <script>
+        function mostrarDireccion(tipoOrden) {
+            const direccion = document.getElementById("direccion-entrega");
+            if (tipoOrden === "Envío Express") {
+                direccion.style.display = "block";
+            } else {
+                direccion.style.display = "none";
+            }
+        }
+
+        function formatearFechaVencimiento() {
+            const fechaInput = document.getElementById("fecha_vencimiento");
+            let valor = fechaInput.value;
+
+            // Eliminar cualquier carácter que no sea un número
+            valor = valor.replace(/\D/g, "");
+
+            // Formatear como MM/YY
+            if (valor.length >= 3) {
+                valor = valor.slice(0, 2) + "/" + valor.slice(2, 4);
+            }
+            
+            fechaInput.value = valor;
+        }
+    </script>
+</body>
+</html>

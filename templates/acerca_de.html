@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Acerca de - RetroNintendo</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/estilos.css') }}">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #000;
+            color: #fff;
+            margin: 0;
+            padding: 0;
+        }
+
+        h1 {
+            text-align: center;
+            color: #ffcc00;
+            margin-top: 30px;
+        }
+
+        .contenedor {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #111;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+            color: #fff;
+        }
+
+        p {
+            font-size: 1.1em;
+            line-height: 1.5;
+        }
+
+        .titulo {
+            color: #e50914;
+            font-size: 1.4em;
+            margin-bottom: 10px;
+        }
+
+        .btn-volver {
+            display: block;
+            width: 100%;
+            text-align: center;
+            padding: 15px;
+            background-color: #ffcc00;
+            color: #000;
+            text-decoration: none;
+            border-radius: 5px;
+            margin-top: 20px;
+            transition: background-color 0.3s ease;
+        }
+
+        .btn-volver:hover {
+            background-color: #e5b800;
+        }
+
+    </style>
+</head>
+<body>
+    <!-- Música de fondo -->
+    <audio autoplay loop>
+        <source src="{{ url_for('static', filename='media/21 Market.mp3') }}" type="audio/mpeg">
+        Tu navegador no soporta la reproducción de audio.
+    </audio>
+
+    <h1>Acerca de RetroNintendo</h1>
+    <div class="contenedor">
+        <p class="titulo">Información del Proyecto</p>
+        <p>Este proyecto, <strong>RetroNintendo</strong>, es una tienda de videojuegos dedicada a la venta de títulos clásicos y actuales de Nintendo. El objetivo de esta plataforma es permitir a los usuarios explorar y adquirir juegos de manera sencilla y eficiente.</p>
+
+        <p class="titulo">Datos del Estudiante</p>
+        <p><strong>Nombre:</strong> Alejandro Sáenz Rivera</p>
+
+        <p class="titulo">Información Académica</p>
+        <p><strong>Institución:</strong> Colegio Universitario de Cartago</p>
+        <p><strong>Curso:</strong> Programación 5</p>
+        <p><strong>Profesor:</strong> Adrián Garita Pulido</p>
+
+        <a href="{{ url_for('index') }}" class="btn-volver">Volver al Inicio</a>
+    </div>
+</body>
+</html>

@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Proveedor de Videojuegos</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/estilos.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        /* Estilos generales */
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f3f4f6;
+            color: #333;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+        }
+
+        h1 {
+            color: #007acc;
+            margin-top: 20px;
+            font-size: 2em;
+        }
+
+        /* Estilos de la tabla */
+        table {
+            width: 80%;
+            margin: 20px auto;
+            border-collapse: collapse;
+            background-color: #fff;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            border-radius: 10px;
+            overflow: hidden;
+        }
+
+        th, td {
+            padding: 15px;
+            text-align: center;
+        }
+
+        th {
+            background-color: #007acc;
+            color: #fff;
+            font-size: 1.2em;
+            text-transform: uppercase;
+        }
+
+        td {
+            color: #333;
+            font-size: 1em;
+            border-bottom: 1px solid #ddd;
+        }
+
+        /* Alternar color de filas */
+        tr:nth-child(even) {
+            background-color: #f9f9f9;
+        }
+
+        /* Estilo para el mensaje de error */
+        p.error {
+            color: red;
+            font-weight: bold;
+        }
+
+        /* Botón de volver */
+        .btn-volver {
+            display: inline-block;
+            margin-top: 20px;
+            padding: 10px 20px;
+            background-color: #007acc;
+            color: #fff;
+            text-decoration: none;
+            border-radius: 5px;
+            transition: background-color 0.3s ease;
+            font-weight: bold;
+        }
+
+        .btn-volver:hover {
+            background-color: #005f99;
+        }
+    </style>
+</head>
+<body>
+    <h1>Lista de Videojuegos del Proveedor Externo</h1>
+
+    {% if videojuegos.error %}
+        <p class="error">{{ videojuegos.error }}</p>
+    {% else %}
+        <table>
+            <thead>
+                <tr>
+                    <th><i class="fas fa-hashtag" title="ID"></i></th>
+                    <th><i class="fas fa-gamepad" title="Nombre"></i></th>
+                    <th><i class="fas fa-dollar-sign" title="Precio"></i></th>
+                    <th><i class="fas fa-tv" title="Plataforma"></i></th>
+                    <th><i class="fas fa-box" title="Stock Disponible"></i></th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for juego in videojuegos %}
+                    <tr>
+                        <td>{{ juego.juego_id }}</td>
+                        <td>{{ juego.nombre_juego }}</td>
+                        <td>${{ juego.precio }}</td>
+                        <td>{{ juego.plataforma }}</td>
+                        <td>{{ juego.stock_disponible }}</td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    {% endif %}
+
+    <!-- Botón para volver al index -->
+    <a href="{{ url_for('index') }}" class="btn-volver">Volver al Inicio</a>
+</body>
+</html>

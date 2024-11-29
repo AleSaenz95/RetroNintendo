@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/estilos.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <title>Gestor de Órdenes</title>
+    <style>
+        /* Estilos generales */
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #000;
+            color: #fff;
+            margin: 0;
+            padding: 0;
+        }
+
+        h1 {
+            text-align: center;
+            margin-top: 20px;
+            color: #ffcc00;
+        }
+
+        .table-container {
+            overflow-x: auto;
+            margin: 0 auto;
+            max-width: 100%;
+        }
+
+        table {
+            width: 80%;
+            margin: 20px auto;
+            border-collapse: collapse;
+            background-color: #111;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+        }
+
+        th, td {
+            padding: 15px;
+            text-align: left;
+            border-bottom: 1px solid #444;
+        }
+
+        th {
+            background-color: #e50914;
+            color: #fff;
+            font-size: 1.1em;
+        }
+
+        td {
+            font-size: 1em;
+            color: #ccc;
+        }
+
+        tr:hover {
+            background-color: #333;
+        }
+
+        .btn-actualizar {
+            padding: 8px 12px;
+            background-color: #007acc;
+            color: #fff;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 0.9em;
+            text-decoration: none;
+            display: inline-block;
+            transition: background-color 0.3s ease;
+        }
+
+        .btn-actualizar:hover {
+            background-color: #005f99;
+        }
+
+        .btn-volver {
+            padding: 10px 20px;
+            background-color: #ffcc00;
+            color: #000;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 1em;
+            margin-top: 20px;
+            text-decoration: none;
+            transition: background-color 0.3s ease;
+        }
+
+        .btn-volver:hover {
+            background-color: #e5b800;
+        }
+    </style>
+</head>
+<body>
+    <div class="contenedor">
+        <h1>Gestor de Órdenes</h1>
+
+        <div class="table-container">
+            <table>
+                <thead>
+                    <tr>
+                        <th><i class="fas fa-hashtag"></i></th>
+                        <th><i class="fas fa-user"></i></th>
+                        <th><i class="fas fa-box"></i></th>
+                        <th><i class="fas fa-clipboard"></i></th>
+                        <th><i class="fas fa-dollar-sign"></i></th>
+                        <th><i class="fas fa-shipping-fast"></i></th>
+                        <th><i class="fas fa-edit"></i></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for orden in ordenes %}
+                    <tr>
+                        <td>{{ orden.orden_id }}</td>
+                        <td>{{ orden.cliente_nombre }}</td>
+                        <td>{{ orden.producto_nombre }}</td>
+                        <td>{{ orden.tipo_orden }}</td>
+                        <td>${{ orden.total }}</td>
+                        <td>
+                            {% if orden.codigo_rastreo %}
+                                {{ orden.codigo_rastreo }}
+                            {% else %}
+                                -
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if orden.tipo_orden == "Envío Express" %}
+                                <a href="{{ url_for('actualizar_estado', codigo_paquete=orden.codigo_rastreo) }}" class="btn-actualizar">Actualizar Estado</a>
+                            {% else %}
+                                -
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <a href="{{ url_for('index') }}" class="btn-volver">Volver al Inicio</a>
+    </div>
+</body>
+</html>

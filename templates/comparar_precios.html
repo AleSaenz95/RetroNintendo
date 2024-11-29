@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Comparación de Precios</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/estilos.css') }}">
+    <style>
+        /* Estilo general de la página */
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #000; /* Fondo negro */
+            color: #fff; /* Texto blanco */
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+        }
+
+        h1 {
+            color: #ffcc00; /* Amarillo estilo Nintendo */
+            margin-top: 20px;
+            font-size: 2em;
+            text-align: center;
+        }
+
+        /* Estilos de la tabla */
+        .table-container {
+            width: 90%;
+            overflow-x: auto;
+            margin-top: 20px;
+            border-radius: 8px;
+            background-color: #111;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.6);
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background-color: #222;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        th, td {
+            padding: 15px;
+            text-align: left;
+            border-bottom: 1px solid #444;
+        }
+
+        th {
+            background-color: #e50914; /* Rojo estilo Nintendo */
+            color: #fff;
+            font-size: 1.1em;
+            text-align: center;
+        }
+
+        td {
+            font-size: 1em;
+            color: #ccc;
+            text-align: center;
+        }
+
+        tr:hover {
+            background-color: #333;
+        }
+
+        .btn-volver {
+            margin-top: 20px;
+            padding: 10px 20px;
+            background-color: #ffcc00; /* Amarillo estilo Nintendo */
+            color: #000;
+            text-decoration: none;
+            border-radius: 5px;
+            font-weight: bold;
+            transition: background-color 0.3s ease;
+        }
+
+        .btn-volver:hover {
+            background-color: #e5b800;
+        }
+
+        /* Mejoras en pantallas pequeñas */
+        @media (max-width: 768px) {
+            .table-container {
+                width: 100%;
+            }
+
+            h1 {
+                font-size: 1.5em;
+            }
+
+            th, td {
+                padding: 10px;
+                font-size: 0.9em;
+            }
+        }
+    </style>
+</head>
+<body>
+    <h1>Comparación de Precios</h1>
+    <div class="table-container">
+        <table>
+            <thead>
+                <tr>
+                    <th>Artículo</th>
+                    <th>Precio Proveedor Competencia</th>
+                    <th>Precio RetroNintendo</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in comparacion_precios %}
+                <tr>
+                    <td>{{ item.nombre_articulo }}</td>
+                    <td>${{ item.precio_competencia }}</td>
+                    <td>
+                        {% if item.precio_retronintendo %}
+                            ${{ item.precio_retronintendo }}
+                        {% else %}
+                            No disponible
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    <a href="{{ url_for('index') }}" class="btn-volver">Volver al Inicio</a>
+</body>
+</html>

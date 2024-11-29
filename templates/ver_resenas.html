@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ver Reseñas - RetroNintendo</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/estilos.css') }}">
+</head>
+<body>
+    <header>
+        <div class="logo">
+            <a href="{{ url_for('index') }}">
+                <img src="{{ url_for('static', filename='media/RetroNintendoLogo.jpeg') }}" alt="Logo de RetroNintendo">
+            </a>
+        </div>
+        <button class="hamburger" onclick="toggleMenu()">
+            <span></span>
+            <span></span>
+            <span></span>
+        </button>
+        <nav>
+            <ul id="navMenu">
+                <li><a href="{{ url_for('index') }}">Inicio</a></li>
+                <li><a href="{{ url_for('agregar_resena') }}">Reseñas</a></li>
+                
+            </ul>
+        </nav>
+        <div class="menu-overlay" onclick="toggleMenu()"></div>
+    </header>
+
+    <main>
+        <section class="hero">
+            <div class="hero-content">
+                <h1>Reseñas de Videojuegos</h1>
+                <p>Descubre las opiniones de otros usuarios sobre tus juegos favoritos</p>
+            </div>
+        </section>
+
+        <!-- Sección para ver las reseñas -->
+        <section class="featured-games">
+            <h2>Reseñas Guardadas</h2>
+            <div class="games-container">
+                {% for reseña in reseñas %}
+                <div class="game">
+                    <h3>{{ reseña[0] }}</h3> <!-- Nombre del juego -->
+                    <p>{{ reseña[1] }}</p>   <!-- La reseña -->
+                </div>
+                {% endfor %}
+            </div>
+        </section>
+    </main>
+
+    <footer>
+        <p>&copy; 2024 RetroNintendo - Todos los derechos reservados.</p>
+    </footer>
+
+    <script>
+        function toggleMenu() {
+            const menu = document.getElementById('navMenu');
+            const hamburger = document.querySelector('.hamburger');
+            const overlay = document.querySelector('.menu-overlay');
+            
+            menu.classList.toggle('show');
+            hamburger.classList.toggle('active');
+            overlay.classList.toggle('show');
+        }
+    </script>
+</body>
+</html>

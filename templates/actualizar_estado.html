@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Actualizar Estado del Paquete</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/estilos.css') }}">
+    <style>
+        /* Estilos generales */
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #000;
+            color: #fff;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+
+        h1 {
+            color: #ffcc00;
+            margin-top: 20px;
+        }
+
+        /* Estilos del formulario */
+        form {
+            background-color: #111;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+            max-width: 400px;
+            width: 100%;
+            margin-top: 20px;
+        }
+
+        label {
+            font-size: 1.1em;
+            color: #ffcc00;
+            display: block;
+            margin-bottom: 10px;
+        }
+
+        input[type="text"] {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 20px;
+            border: 1px solid #444;
+            border-radius: 5px;
+            background-color: #222;
+            color: #fff;
+        }
+
+        input[type="submit"] {
+            width: 100%;
+            padding: 12px;
+            background-color: #e50914;
+            color: #fff;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 1.1em;
+            transition: background-color 0.3s ease;
+        }
+
+        input[type="submit"]:hover {
+            background-color: #b20710;
+        }
+
+        /* Botón de volver */
+        .btn-volver {
+            display: block;
+            text-align: center;
+            margin-top: 20px;
+            padding: 12px 20px;
+            background-color: #ffcc00;
+            color: #000;
+            border-radius: 5px;
+            text-decoration: none;
+            font-weight: bold;
+            transition: background-color 0.3s ease;
+        }
+
+        .btn-volver:hover {
+            background-color: #e5b800;
+        }
+    </style>
+</head>
+<body>
+    <h1>Actualizar Estado del Paquete</h1>
+    <form action="{{ url_for('actualizar_estado', codigo_paquete=codigo_paquete) }}" method="POST">
+        <label for="estado">Nuevo Estado:</label>
+        <input type="text" id="estado" name="estado" required>
+
+        <label for="ubicacion">Nueva Ubicación:</label>
+        <input type="text" id="ubicacion" name="ubicacion">
+
+        <input type="submit" value="Actualizar Estado">
+    </form>
+    <a href="{{ url_for('gestor_ordenes') }}" class="btn-volver">Volver al Gestor de Órdenes</a>
+</body>
+</html>

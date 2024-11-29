@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rastreo de Paquetes</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/estilos.css') }}">
+    <style>
+        /* Estilos generales */
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #000;
+            color: #fff;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+
+        h1 {
+            color: #ffcc00; /* Color amarillo estilo Nintendo */
+            margin-top: 20px;
+        }
+
+        /* Estilos del formulario */
+        form {
+            background-color: #111;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+            max-width: 400px;
+            width: 100%;
+            margin-top: 20px;
+        }
+
+        label {
+            font-size: 1.1em;
+            color: #ffcc00;
+            display: block;
+            margin-bottom: 10px;
+        }
+
+        input[type="text"] {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 20px;
+            border: 1px solid #444;
+            border-radius: 5px;
+            background-color: #222;
+            color: #fff;
+        }
+
+        input[type="submit"] {
+            width: 100%;
+            padding: 12px;
+            background-color: #e50914;
+            color: #fff;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 1.1em;
+            transition: background-color 0.3s ease;
+        }
+
+        input[type="submit"]:hover {
+            background-color: #b20710;
+        }
+
+        /* Estilos para el resultado del rastreo */
+        .resultado-rastreo {
+            background-color: #111;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+            max-width: 400px;
+            width: 100%;
+            margin-top: 20px;
+        }
+
+        .resultado-rastreo p {
+            color: #ccc;
+            font-size: 1em;
+            margin: 8px 0;
+        }
+
+        .resultado-rastreo strong {
+            color: #ffcc00;
+        }
+
+        /* Estilos del mensaje de error */
+        p[style="color: red;"] {
+            color: #ff4d4d;
+            font-weight: bold;
+            text-align: center;
+        }
+
+        /* Botón de volver */
+        .btn-volver {
+            display: block;
+            text-align: center;
+            margin-top: 20px;
+            padding: 12px 20px;
+            background-color: #ffcc00;
+            color: #000;
+            border-radius: 5px;
+            text-decoration: none;
+            font-weight: bold;
+            transition: background-color 0.3s ease;
+        }
+
+        .btn-volver:hover {
+            background-color: #e5b800;
+        }
+    </style>
+</head>
+<body>
+    <h1>Rastreo de Paquetes</h1>
+
+    <form action="/rastreo" method="POST">
+        <label for="codigo_paquete">Código del Paquete:</label>
+        <input type="text" id="codigo_paquete" name="codigo_paquete" required>
+        <input type="submit" value="Rastrear">
+    </form>
+
+    {% if rastreo_info %}
+        {% if rastreo_info.error %}
+            <p style="color: red;">{{ rastreo_info.error }}</p>
+        {% else %}
+            <div class="resultado-rastreo">
+                <p><strong>Código del Paquete:</strong> {{ rastreo_info.codigo_paquete }}</p>
+                <p><strong>Estado:</strong> {{ rastreo_info.estado }}</p>
+                <p><strong>Ubicación Actual:</strong> {{ rastreo_info.ubicacion_actual }}</p>
+                <p><strong>Última Actualización:</strong> {{ rastreo_info.ultima_actualizacion }}</p>
+            </div>
+        {% endif %}
+    {% endif %}
+
+    <a href="{{ url_for('index') }}" class="btn-volver">Volver al Inicio</a>
+</body>
+</html>

@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ver Mensajes - RetroNintendo</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/estilos.css') }}">
+    <style>
+        .mensajes-container {
+            width: 80%;
+            margin: 20px auto;
+            padding: 20px;
+            background-color: #222;
+            border-radius: 10px;
+        }
+
+        .mensaje {
+            background-color: #333;
+            padding: 15px;
+            margin-bottom: 10px;
+            border-radius: 8px;
+        }
+
+        .mensaje h3 {
+            color: #ffcc00;
+        }
+
+        .mensaje p {
+            color: #fff;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="logo">
+            <a href="{{ url_for('index') }}">
+                <img src="{{ url_for('static', filename='media/RetroNintendoLogo.jpeg') }}" alt="Logo de RetroNintendo">
+            </a>
+        </div>
+    </header>
+
+    <main>
+        <section>
+            <h1>Mensajes Recibidos</h1>
+            <p>Aquí puedes ver los mensajes que hemos recibido de nuestros clientes.</p>
+            <div class="mensajes-container">
+                {% for mensaje in mensajes %}
+                <div class="mensaje">
+                    <h3>De: {{ mensaje[0] }} ({{ mensaje[1] }})</h3> <!-- Nombre y correo -->
+                    <p>{{ mensaje[2] }}</p>   <!-- Mensaje -->
+                </div>
+                {% endfor %}
+            </div>
+        </section>
+    </main>
+</body>
+</html>

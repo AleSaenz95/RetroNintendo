@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Actualizar Contraseña - RetroNintendo</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/estilos.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        /* Estilos para el contenedor */
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #000;
+            color: #fff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 0;
+        }
+        .container {
+            max-width: 400px;
+            padding: 30px 20px;
+            background-color: #111;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+            text-align: center;
+            border-top: 4px solid #e50914;
+        }
+        h1 {
+            color: #ffcc00;
+            font-size: 2em;
+            margin-bottom: 20px;
+            text-shadow: 1px 1px 4px rgba(0, 0, 0, 0.6);
+        }
+        p {
+            color: #ccc;
+            margin-bottom: 25px;
+            font-size: 1em;
+            line-height: 1.5;
+        }
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-size: 1.1em;
+            color: #ffcc00;
+        }
+        .password-container {
+            position: relative;
+            display: flex;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        .password-container input[type="password"] {
+            width: 100%;
+            padding: 12px 40px 12px 10px;
+            font-size: 1em;
+            color: #fff;
+            background-color: #222;
+            border: 1px solid #444;
+            border-radius: 5px;
+        }
+        .password-toggle {
+            position: absolute;
+            right: 10px;
+            cursor: pointer;
+            color: #ffcc00;
+            font-size: 1.2em;
+        }
+        input[type="submit"] {
+            width: 100%;
+            padding: 12px;
+            background-color: #e50914;
+            color: #fff;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 1.2em;
+            transition: background-color 0.3s ease;
+            font-weight: bold;
+        }
+        input[type="submit"]:hover {
+            background-color: #b20710;
+        }
+        /* Estilo para las sombras de los campos de entrada */
+        input[type="password"]:focus {
+            border-color: #ffcc00;
+            box-shadow: 0 0 8px rgba(255, 204, 0, 0.5);
+            outline: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Actualizar Contraseña</h1>
+        <p>La nueva contraseña debe tener entre 8 y 14 caracteres, incluir al menos una letra mayúscula, una minúscula, un número y un carácter especial.</p>
+        
+        <form action="{{ url_for('actualizar_nueva_contrasena') }}" method="POST">
+            <label for="nueva_password">Nueva Contraseña:</label>
+            <div class="password-container">
+                <input type="password" id="nueva_password" name="nueva_password" required>
+                <i class="fas fa-eye password-toggle" onclick="togglePassword('nueva_password')"></i>
+            </div>
+
+            <label for="confirm_password">Confirmar Contraseña:</label>
+            <div class="password-container">
+                <input type="password" id="confirm_password" name="confirm_password" required>
+                <i class="fas fa-eye password-toggle" onclick="togglePassword('confirm_password')"></i>
+            </div>
+
+            <input type="submit" value="Actualizar Contraseña">
+        </form>
+    </div>
+
+    <script>
+        function togglePassword(id) {
+            const passwordField = document.getElementById(id);
+            const passwordToggle = passwordField.nextElementSibling;
+            if (passwordField.type === "password") {
+                passwordField.type = "text";
+                passwordToggle.classList.replace("fa-eye", "fa-eye-slash");
+            } else {
+                passwordField.type = "password";
+                passwordToggle.classList.replace("fa-eye-slash", "fa-eye");
+            }
+        }
+    </script>
+</body>
+</html>

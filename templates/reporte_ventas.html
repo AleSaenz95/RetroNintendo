@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reporte de Ventas - RetroNintendo</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script> <!-- Biblioteca para gráficos -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/estilos.css') }}">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #000;
+            color: #fff;
+            margin: 0;
+            padding: 0;
+        }
+
+        h1 {
+            text-align: center;
+            color: #ffcc00;
+            margin-top: 20px;
+        }
+
+        .contenedor {
+            width: 80%;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        #myChart {
+            width: 100%;
+            height: 400px;
+        }
+
+        .btn-volver {
+            display: block;
+            width: 100%;
+            text-align: center;
+            padding: 15px;
+            background-color: #ffcc00; /* Amarillo estilo Nintendo */
+            color: #000;
+            text-decoration: none;
+            border-radius: 5px;
+            margin-top: 20px;
+            transition: background-color 0.3s ease;
+        }
+
+        .btn-volver:hover {
+            background-color: #e5b800;
+        }
+    </style>
+</head>
+<body>
+    <h1>Reporte de Ventas</h1>
+    <div class="contenedor">
+        <canvas id="myChart"></canvas>
+        <!-- Botón para volver al inicio -->
+        <a href="{{ url_for('index') }}" class="btn-volver">Volver al Inicio</a>
+    </div>
+
+    <script>
+        // Obtener los datos del servidor (se pasan las listas desde Flask)
+        const labels = JSON.parse('{{ productos | tojson | safe }}');  // Nombres de los productos
+        const dataVentas = JSON.parse('{{ cantidades | tojson | safe }}');  // Cantidades vendidas
+        const dataIngresos = JSON.parse('{{ ingresos | tojson | safe }}');  // Ingresos generados
+
+        const ctx = document.getElementById('myChart').getContext('2d');
+        const myChart = new Chart(ctx, {
+            type: 'bar',  // Puedes cambiar a 'line' si prefieres un gráfico de línea
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: 'Cantidad Vendida',
+                    data: dataVentas,
+                    backgroundColor: 'rgba(255, 99, 132, 0.5)',
+                    borderColor: 'rgba(255, 99, 132, 1)',
+                    borderWidth: 1
+                }, {
+                    label: 'Ingresos ($)',
+                    data: dataIngresos,
+                    backgroundColor: 'rgba(54, 162, 235, 0.5)',
+                    borderColor: 'rgba(54, 162, 235, 1)',
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                scales: {
+                    y: {
+                        beginAtZero: true
+                    }
+                }
+            }
+        });
+    </script>
+</body>
+</html>
