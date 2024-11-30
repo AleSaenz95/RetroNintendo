@@ -16,11 +16,16 @@ app.secret_key = 'tu_secreto'
 app.config['TEMPLATES_AUTO_RELOAD'] = True
 app.jinja_env.cache = {}
 
+
+
+
+
 conn_str = (
     "DRIVER={SQL Server};"
-    "SERVER=ALE;"                   
-    "DATABASE=RetroNintendo;"        
-    "Trusted_Connection=yes;"       
+    "SERVER=tiusr3pl.cuc-carrera-ti.ac.cr;"
+    "DATABASE=tiusr3pl_RetroNintendo;"
+    "UID=tiusr3pl66;"
+    "PWD=LpsLt5Awx&nb8$b2;"
 )
 
 try:
@@ -28,6 +33,25 @@ try:
     print("Conexión exitosa a la base de datos.")
 except Exception as e:
     print(f"Error en la conexión: {e}")
+
+
+
+
+
+
+# conn_str = (
+#     "DRIVER={SQL Server};"
+#     "SERVER=ALE;"
+#     "DATABASE=RetroNintendo;"
+#     "Trusted_Connection=yes;"
+# )
+
+# try:
+#     conn = pyodbc.connect(conn_str)
+#     print("Conexión exitosa a la base de datos.")
+# except Exception as e:
+#     print(f"Error en la conexión: {e}")
+
 
 
 
