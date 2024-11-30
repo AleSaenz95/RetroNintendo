@@ -1,6 +1,8 @@
 import subprocess
 
 # Lista de servidores a ejecutar
+
+
 servidores = [
     "python servidor.py",
     "python servidor_proveedor_externo.py",
