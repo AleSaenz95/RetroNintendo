@@ -4,19 +4,24 @@ import pyodbc
 app = Flask(__name__)
 
 # Configuración de conexión a la base de datos RetroNintendo y ServiciosExterno
-conn_str_retronintendo = (
+# Conexión a la base de datos ServiciosExterno
+conn_str_servicios_externo = pyodbc.connect(
     "DRIVER={SQL Server};"
-    "SERVER=ALE;"  
-    "DATABASE=RetroNintendo;"
-    "Trusted_Connection=yes;"
+    "SERVER=tiusr3pl.cuc-carrera-ti.ac.cr;"
+    "DATABASE=tiusr3pl_RetroNintendo_SE;"
+    "UID=tiusr3pl66;"
+    "PWD=LpsLt5Awx&nb8$b2;"
 )
 
-conn_str_servicios_externo = (
+# Conexión a la base de datos RetroNintendo
+conn_str_retronintendo = pyodbc.connect(
     "DRIVER={SQL Server};"
-    "SERVER=ALE;" 
-    "DATABASE=ServiciosExterno;"
-    "Trusted_Connection=yes;"
+    "SERVER=tiusr3pl.cuc-carrera-ti.ac.cr;"
+    "DATABASE=tiusr3pl_RetroNintendo;"
+    "UID=tiusr3pl66;"
+    "PWD=LpsLt5Awx&nb8$b2;"
 )
+
 
 # Ruta para verificar la identificación en ambas bases de datos usando GET
 @app.route('/api/verificar_identificacion', methods=['GET'])

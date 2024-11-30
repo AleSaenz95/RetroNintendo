@@ -8,10 +8,13 @@ app = Flask(__name__)
 # Configuración de la conexión a la base de datos de servicios externos
 conn_str = (
     "DRIVER={SQL Server};"
-    "SERVER=ALE;"                  
-    "DATABASE=ServiciosExterno;"        
-    "Trusted_Connection=yes;"       
+    "SERVER=tiusr3pl.cuc-carrera-ti.ac.cr;"
+    "DATABASE=tiusr3pl_RetroNintendo_SE;"
+    "UID=tiusr3pl66;"
+    "PWD=LpsLt5Awx&nb8$b2;"
 )
+     
+
 
 # Endpoint para procesar pagos con tarjeta
 @app.route('/api/pago_tarjeta', methods=['POST'])

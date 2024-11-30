@@ -3,21 +3,31 @@ import pyodbc
 
 app = Flask(__name__)
 
-# Conexión a la base de datos ServiciosExterno
-conn_servicios_externo = pyodbc.connect(
-    "DRIVER={SQL Server};"
-    "SERVER=ALE;"  
-    "DATABASE=ServiciosExterno;"
-    "Trusted_Connection=yes;"
-)
+try:
+    conn_servicios_externo = pyodbc.connect(
+        "DRIVER={SQL Server};"
+        "SERVER=tiusr3pl.cuc-carrera-ti.ac.cr;"
+        "DATABASE=tiusr3pl_RetroNintendo_SE;"
+        "UID=tiusr3pl66;"
+        "PWD=LpsLt5Awx&nb8$b2;"
+    )
+    print("Conexión exitosa a la base de datos ServiciosExterno.")
+except pyodbc.Error as e:
+    print(f"Error en la conexión a ServiciosExterno: {e}")
 
-# Conexión a la base de datos RetroNintendo
-conn_retro_nintendo = pyodbc.connect(
-    "DRIVER={SQL Server};"
-    "SERVER=ALE;"  
-    "DATABASE=RetroNintendo;"
-    "Trusted_Connection=yes;"
-)
+try:
+    conn_retro_nintendo = pyodbc.connect(
+        "DRIVER={SQL Server};"
+        "SERVER=tiusr3pl.cuc-carrera-ti.ac.cr;"
+        "DATABASE=tiusr3pl_RetroNintendo;"
+        "UID=tiusr3pl66;"
+        "PWD=LpsLt5Awx&nb8$b2;"
+    )
+    print("Conexión exitosa a la base de datos RetroNintendo.")
+except pyodbc.Error as e:
+    print(f"Error en la conexión a RetroNintendo: {e}")
+
+
 
 
 @app.route('/api/comparar_precios', methods=['GET'])

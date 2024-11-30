@@ -8,9 +8,10 @@ app = Flask(__name__)
 # Configuración de la conexión a SQL Server
 conn_str = (
     "DRIVER={SQL Server};"
-    "SERVER=ALE;"  # Cambia esto al nombre de tu servidor e instancia
-    "DATABASE=RetroNintendo;"
-    "Trusted_Connection=yes;"
+    "SERVER=tiusr3pl.cuc-carrera-ti.ac.cr;"
+    "DATABASE=tiusr3pl_RetroNintendo;"
+    "UID=tiusr3pl66;"
+    "PWD=LpsLt5Awx&nb8$b2;"
 )
 
 # Función para obtener la conexión a la base de datos

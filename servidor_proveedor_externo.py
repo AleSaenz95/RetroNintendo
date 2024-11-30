@@ -3,13 +3,15 @@ import pyodbc
 
 app = Flask(__name__)
 
-# Configuración de conexión a la base de datos
+# Configuración de la conexión a la base de datos de servicios externos
 conn_str = (
     "DRIVER={SQL Server};"
-    "SERVER=ALE;"  
-    "DATABASE=ServiciosExterno;"        
-    "Trusted_Connection=yes;"
+    "SERVER=tiusr3pl.cuc-carrera-ti.ac.cr;"
+    "DATABASE=tiusr3pl_RetroNintendo_SE;"
+    "UID=tiusr3pl66;"
+    "PWD=LpsLt5Awx&nb8$b2;"
 )
+
 
 # Ruta para obtener todos los videojuegos del proveedor externo
 @app.route('/api/videojuegos_proveedor', methods=['GET'])
