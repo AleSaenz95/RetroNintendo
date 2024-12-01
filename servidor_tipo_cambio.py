@@ -1,6 +1,7 @@
 from flask import Flask, jsonify
 from zeep import Client
 from datetime import datetime
+import os
 
 app = Flask(__name__)
 
@@ -33,5 +34,7 @@ def obtener_tipo_cambio():
     except Exception as e:
         return jsonify({"error": f"Error al obtener el tipo de cambio: {str(e)}"}), 500
 
-if __name__ == '__main__':
-    app.run(port=5009, debug=True)
+if __name__ == "__main__":
+    # Cambia el puerto predeterminado según la lista de puertos
+    port = int(os.environ.get("PORT", 5009))  # 5009 para servidor_tipo_cambio.py
+    app.run(host="0.0.0.0", port=port)

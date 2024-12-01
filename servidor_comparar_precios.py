@@ -1,5 +1,6 @@
 from flask import Flask, jsonify
 import pyodbc
+import os
 
 app = Flask(__name__)
 
@@ -71,5 +72,7 @@ def comparar_precios():
 
 
 
-if __name__ == '__main__':
-    app.run(port=5011, debug=True)
+if __name__ == "__main__":
+    # Cambia el puerto predeterminado según la lista de puertos
+    port = int(os.environ.get("PORT", 5011))  # 5011 para servidor_comparar_precios.py
+    app.run(host="0.0.0.0", port=port)

@@ -2,6 +2,7 @@ from flask import Flask, request, jsonify, render_template, redirect, url_for, r
 import pyodbc
 from werkzeug.security import generate_password_hash
 from datetime import datetime
+import os
 
 app = Flask(__name__)
 
@@ -254,5 +255,7 @@ def solicitud_cotizacion():
 
 
 
-if __name__ == '__main__':
-    app.run(debug=True, port=4000)         
+if __name__ == "__main__":
+    # Cambia el puerto predeterminado según la lista de puertos
+    port = int(os.environ.get("PORT", 4000))  # 4000 para RetroNintendo.py
+    app.run(host="0.0.0.0", port=port)

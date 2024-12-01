@@ -8,6 +8,7 @@ from datetime import datetime, timedelta
 import pyodbc
 from datetime import date
 import requests 
+import os
 
 
 
@@ -1132,5 +1133,7 @@ def tipo_cambio():
     return render_template('tipo_cambio.html', tipo_cambio=tipo_cambio_venta)
 
 
-if __name__ == '__main__':
-    app.run(debug=True, port=5000)  # Cambia 5000 al número de puerto que desees
+if __name__ == "__main__":
+    # Cambia el puerto predeterminado según la lista de puertos
+    port = int(os.environ.get("PORT", 5000))  # 5000 para servidor.py
+    app.run(host="0.0.0.0", port=port)

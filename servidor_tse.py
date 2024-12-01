@@ -1,5 +1,6 @@
 from flask import Flask, request, jsonify
 import pyodbc
+import os
 
 app = Flask(__name__)
 
@@ -61,5 +62,7 @@ def verificar_identificacion():
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
-if __name__ == '__main__':
-    app.run(port=5002, debug=True)
+if __name__ == "__main__":
+    # Cambia el puerto predeterminado según la lista de puertos
+    port = int(os.environ.get("PORT", 5002))  # 5002 para servidor_tse.py
+    app.run(host="0.0.0.0", port=port)

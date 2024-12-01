@@ -1,5 +1,6 @@
 from flask import Flask, jsonify, request
 import pyodbc
+import os
 
 app = Flask(__name__)
 
@@ -83,5 +84,7 @@ def agregar_videojuegos_proveedor():
 
 
 
-if __name__ == '__main__':
-    app.run(port=5003, debug=True)
+if __name__ == "__main__":
+    # Cambia el puerto predeterminado según la lista de puertos
+    port = int(os.environ.get("PORT", 5003))  # 5003 para servidor_proveedor_externo.py
+    app.run(host="0.0.0.0", port=port)

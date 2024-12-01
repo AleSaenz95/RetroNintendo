@@ -3,4 +3,4 @@ services:
     name: RetroNintendo
     env: docker
     plan: starter
-    dockerfilePath: docker-compose.yml
+    dockerfilePath: Dockerfile

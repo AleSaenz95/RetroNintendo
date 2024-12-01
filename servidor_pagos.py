@@ -2,6 +2,7 @@ from flask import Flask, request, jsonify
 import pyodbc
 from datetime import datetime
 from decimal import Decimal
+import os
 
 app = Flask(__name__)
 
@@ -202,6 +203,7 @@ def registrar_tarjeta():
 
 
 
-
-if __name__ == '__main__':
-    app.run(port=5001, debug=True)
+if __name__ == "__main__":
+    # Cambia el puerto predeterminado según la lista de puertos
+    port = int(os.environ.get("PORT", 5001))  # 5001 para servidor_pagos.py
+    app.run(host="0.0.0.0", port=port)

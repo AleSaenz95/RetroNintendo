@@ -1,6 +1,7 @@
 from datetime import datetime
 from flask import Flask, jsonify, request
 import pyodbc
+import os
 
 app = Flask(__name__)
 
@@ -76,5 +77,7 @@ def actualizar_estado_paquete():
 
 
 
-if __name__ == '__main__':
-    app.run(port=5111, debug=True)
+if __name__ == "__main__":
+    # Cambia el puerto predeterminado según la lista de puertos
+    port = int(os.environ.get("PORT", 5111))  # 5111 para servidor_rastreo.py
+    app.run(host="0.0.0.0", port=port)
