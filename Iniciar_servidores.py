@@ -1,16 +1,16 @@
 import subprocess
 
-# Lista de servidores con sus puertos únicos
+# Lista de comandos para iniciar los servidores
 servidores = [
-    "python servidor.py --port 5000",
-    "python servidor_proveedor_externo.py --port 5003",
-    "python servidor_pagos.py --port 5001",
-    "python servidor_proveedor_competencia.py --port 5005",
-    "python servidor_rastreo.py --port 5111",  # Puerto actualizado
-    "python servidor_tipo_cambio.py --port 5009",
-    "python servidor_tse.py --port 5002",
-    "python RetroNintendo.py --port 4000",
-    "python servidor_comparar_precios.py --port 5011"
+    "python servidor.py",
+    "python servidor_pagos.py",
+    "python servidor_proveedor_externo.py",
+    "python servidor_proveedor_competencia.py",
+    "python servidor_rastreo.py",
+    "python servidor_tipo_cambio.py",
+    "python servidor_tse.py",
+    "python RetroNintendo.py",
+    "python servidor_comparar_precios.py"
 ]
 
 # Ejecutar cada servidor en paralelo
