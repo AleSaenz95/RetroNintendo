@@ -13,6 +13,6 @@ RUN apt-get update && apt-get install -y \
     msodbcsql17 && \
     pip install --no-cache-dir -r requirements.txt
 
-EXPOSE 5004
+EXPOSE 5111
 
 CMD ["python", "servidor_rastreo.py"]

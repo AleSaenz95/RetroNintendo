@@ -1055,7 +1055,7 @@ def rastrear_paquete():
         
         try:
             # Solicitar la información de rastreo al servidor de rastreo externo
-            response = requests.get(f"http://127.0.0.1:5004/api/rastreo_paquete/{codigo_paquete}")
+            response = requests.get(f"http://127.0.0.1:5111/api/rastreo_paquete/{codigo_paquete}")
             rastreo_info = response.json()
         except Exception as e:
             rastreo_info = {"error": f"Error de conexión: {str(e)}"}
