@@ -1,11 +1,6 @@
 services:
   - type: web
     name: RetroNintendo
-    env: python
-    region: oregon
-    buildCommand: ""
-    startCommand: python RetroNintendo.py
-    dockerfilePath: Dockerfile
-    envVars:
-      - key: PORT
-        value: 5000
+    env: docker
+    plan: starter
+    dockerfilePath: docker-compose.yml

@@ -1,0 +1,18 @@
+FROM python:3.9-slim
+
+WORKDIR /app
+
+COPY servidor_proveedor_competencia.py /app
+COPY requirements.txt /app
+
+RUN apt-get update && apt-get install -y \
+    unixodbc \
+    unixodbc-dev \
+    libodbc1 \
+    odbcinst \
+    msodbcsql17 && \
+    pip install --no-cache-dir -r requirements.txt
+
+EXPOSE 5004
+
+CMD ["python", "servidor_proveedor_competencia.py"]

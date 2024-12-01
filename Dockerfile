@@ -18,8 +18,8 @@ COPY . /app
 # Instalar dependencias de Python
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Exponer el puerto que usará la aplicación
-EXPOSE 5000
+# Exponer puertos necesarios
+EXPOSE 5000 5001 5003 5004 5009 5011
 
-# Comando para correr la aplicación principal
+# Comando para correr el script que inicia todos los servidores
 CMD ["python", "Iniciar_servidores.py"]
