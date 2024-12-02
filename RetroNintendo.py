@@ -250,11 +250,6 @@ def solicitud_cotizacion():
 
 
 
-
-
-
-
-
 if __name__ == "__main__":
     # Cambia el puerto predeterminado según la lista de puertos
     port = int(os.environ.get("PORT", 4000))  # 4000 para RetroNintendo.py
