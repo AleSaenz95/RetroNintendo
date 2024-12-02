@@ -21,53 +21,59 @@ app.jinja_env.cache = {}
 
 
 
-
-import pyodbc
-
-# Cadena de conexión para la base de datos principal
-conn_str = (
-    "DRIVER={ODBC Driver 17 for SQL Server};"  # Asegúrate de usar el controlador correcto
+# Cadenas de conexión
+CONN_STR_PRINCIPAL = (
+    "DRIVER={ODBC Driver 17 for SQL Server};"
     "SERVER=tiusr3pl.cuc-carrera-ti.ac.cr;"
     "DATABASE=tiusr3pl_RetroNintendo;"
     "UID=tiusr3pl66;"
     "PWD=LpsLt5Awx&nb8$b2;"
 )
 
-# Cadena de conexión para la base de datos de servicios externos
-conn_str_servicios_externo = (
-    "DRIVER={ODBC Driver 17 for SQL Server};"  # Asegúrate de usar el controlador correcto
+CONN_STR_SERVICIOS_EXTERNO = (
+    "DRIVER={ODBC Driver 17 for SQL Server};"
     "SERVER=tiusr3pl.cuc-carrera-ti.ac.cr;"
     "DATABASE=tiusr3pl_RetroNintendo_SE;"
     "UID=tiusr3pl66;"
     "PWD=LpsLt5Awx&nb8$b2;"
 )
 
-# Función para conectar a la base de datos principal
-def get_db_connection():
+# Función para conexión a la base de datos
+def get_db_connection(conn_str):
     try:
-        conn = pyodbc.connect(conn_str)
-        print("Conexión exitosa a la base de datos principal.")
+        conn = pyodbc.connect(conn_str, timeout=5)
+        print("Conexión exitosa.")
         return conn
-    except pyodbc.Error as e:
-        print(f"Error al conectar a la base de datos principal: {e}")
-        return None
+    except pyodbc.InterfaceError as e:
+        print(f"Error de conexión (interface): {e}")
+    except pyodbc.OperationalError as e:
+        print(f"Error operacional: {e}")
+    except Exception as e:
+        print(f"Error inesperado al conectar a la base de datos: {e}")
+    return None
 
-# Intentar conexión a la base de datos de servicios externos
-try:
-    conn_servicios_externo = pyodbc.connect(conn_str_servicios_externo)
-    print("Conexión exitosa a la base de datos de servicios externos.")
-except pyodbc.Error as e:
-    conn_servicios_externo = None
-    print(f"Error al conectar a la base de datos de servicios externos: {e}")
+# Verificar conexiones al iniciar
+@app.route('/test_connections')
+def test_connections():
+    conn_principal = get_db_connection(CONN_STR_PRINCIPAL)
+    conn_servicios = get_db_connection(CONN_STR_SERVICIOS_EXTERNO)
 
-# Probar conexión a la base de datos principal
-try:
-    conn = pyodbc.connect(conn_str)
-    print("Conexión exitosa a la base de datos principal.")
-except pyodbc.Error as e:
-    conn = None
-    print(f"Error en la conexión a la base de datos principal: {e}")
+    if conn_principal:
+        conn_principal.close()
+        principal_status = "Conexión a RetroNintendo exitosa."
+    else:
+        principal_status = "Error al conectar a RetroNintendo."
 
+    if conn_servicios:
+        conn_servicios.close()
+        servicios_status = "Conexión a ServiciosExterno exitosa."
+    else:
+        servicios_status = "Error al conectar a ServiciosExterno."
+
+    return jsonify({
+        "RetroNintendo": principal_status,
+        "ServiciosExterno": servicios_status
+    })
 
 
 
@@ -100,64 +106,135 @@ EMAIL_PASS = "frqg gqyg pvqv vper"
 # Ruta para ver las reseñas guardadas
 @app.route('/ver-resenas')
 def ver_resenas():
-    cursor = conn.cursor()
-    query = "SELECT nombre_juego, resena FROM Resenas"
-    cursor.execute(query)
-    reseñas = cursor.fetchall()
+    # Obtener la conexión a la base de datos
+    conn = get_db_connection(CONN_STR_PRINCIPAL)  # Usar función para manejar conexiones
+    if conn is None:
+        return "Error al conectar con la base de datos.", 500
 
+    try:
+        cursor = conn.cursor()
+        query = "SELECT nombre_juego, resena FROM Resenas"
+        cursor.execute(query)
+        reseñas = cursor.fetchall()
+        cursor.close()  # Cerrar el cursor después de usarlo
+    except Exception as e:
+        print(f"Error al obtener reseñas: {e}")
+        return "Error al obtener las reseñas.", 500
+    finally:
+        conn.close()  # Asegurarse de cerrar la conexión
+
+    # Renderizar la plantilla con las reseñas
     return render_template('ver_resenas.html', reseñas=reseñas)
 
-# Ruta para recibir y guardar un mensaje (página de contacto)
+
 @app.route('/enviar-mensaje', methods=['GET', 'POST'])
 def enviar_mensaje():
     if request.method == 'POST':
+        # Obtener datos del formulario
         nombre = request.form['nombre']
         correo = request.form['correo']  # Nuevo campo correo
         mensaje = request.form['mensaje']
 
-        # Guardar el mensaje en la base de datos
-        cursor = conn.cursor()
-        query = "INSERT INTO Contactos (nombre, correo, mensaje) VALUES (?, ?, ?)"
-        cursor.execute(query, (nombre, correo, mensaje))
-        conn.commit()
+        # Conectar a la base de datos
+        conn = get_db_connection(CONN_STR_PRINCIPAL)  # Usar la función de conexión
+        if conn is None:
+            return "Error al conectar con la base de datos.", 500
 
+        try:
+            cursor = conn.cursor()
+            query = "INSERT INTO Contactos (nombre, correo, mensaje) VALUES (?, ?, ?)"
+            cursor.execute(query, (nombre, correo, mensaje))
+            conn.commit()
+            cursor.close()  # Cerrar el cursor después de usarlo
+        except Exception as e:
+            print(f"Error al guardar el mensaje: {e}")
+            return "Error al guardar el mensaje.", 500
+        finally:
+            conn.close()  # Cerrar la conexión
+
+        # Redirigir a la página de visualización de mensajes
         return redirect('/ver-mensajes')
+
+    # Renderizar el formulario de contacto si el método es GET
     return render_template('recibir_mensaje.html')
 
-# Ruta para ver los mensajes guardados
+
 @app.route('/ver-mensajes')
 def ver_mensajes():
-    cursor = conn.cursor()
-    query = "SELECT nombre, correo, mensaje FROM Contactos"
-    cursor.execute(query)
-    mensajes = cursor.fetchall()
+    # Conectar a la base de datos
+    conn = get_db_connection(CONN_STR_PRINCIPAL)  # Usar la función de conexión
+    if conn is None:
+        return "Error al conectar con la base de datos.", 500
 
+    try:
+        cursor = conn.cursor()
+        query = "SELECT nombre, correo, mensaje FROM Contactos"
+        cursor.execute(query)
+        mensajes = cursor.fetchall()
+        cursor.close()  # Cerrar el cursor después de usarlo
+    except Exception as e:
+        print(f"Error al obtener los mensajes: {e}")
+        return "Error al obtener los mensajes.", 500
+    finally:
+        conn.close()  # Asegurarse de cerrar la conexión
+
+    # Renderizar el HTML con los mensajes
     return render_template('ver_mensajes.html', mensajes=mensajes)
 
 
-# Ruta para ver los juegos del catálogo
+
 @app.route('/catalogo')
 def catalogo():
-    cursor = conn.cursor()
-    query = "SELECT item_id, nombre_articulo, descripcion, precio, cantidad_disponible FROM Inventario"
-    cursor.execute(query)
-    articulos = cursor.fetchall()
+    # Conectar a la base de datos
+    conn = get_db_connection(CONN_STR_PRINCIPAL)  # Usar la función de conexión
+    if conn is None:
+        return "Error al conectar con la base de datos.", 500
 
+    try:
+        cursor = conn.cursor()
+        query = "SELECT item_id, nombre_articulo, descripcion, precio, cantidad_disponible FROM Inventario"
+        cursor.execute(query)
+        articulos = cursor.fetchall()
+        cursor.close()  # Cerrar el cursor después de usarlo
+    except Exception as e:
+        print(f"Error al obtener el catálogo: {e}")
+        return "Error al obtener el catálogo.", 500
+    finally:
+        conn.close()  # Asegurarse de cerrar la conexión
+
+    # Renderizar la plantilla con los artículos del catálogo
     return render_template('catalogo.html', articulos=articulos)
 
-# Ruta para vista del producto
+
 @app.route('/producto/<int:item_id>')
 def detalle_producto(item_id):
-    cursor = conn.cursor()
-    query = "SELECT item_id, nombre_articulo, descripcion, precio, cantidad_disponible, imagen FROM Inventario WHERE item_id = ?"
-    cursor.execute(query, item_id)
-    producto = cursor.fetchone()
+    # Conectar a la base de datos
+    conn = get_db_connection(CONN_STR_PRINCIPAL)  # Usar la función de conexión
+    if conn is None:
+        return "Error al conectar con la base de datos.", 500
 
+    try:
+        cursor = conn.cursor()
+        query = "SELECT item_id, nombre_articulo, descripcion, precio, cantidad_disponible, imagen FROM Inventario WHERE item_id = ?"
+        cursor.execute(query, (item_id,))  # Asegurarse de pasar un tuple para evitar errores de sintaxis
+        producto = cursor.fetchone()
+        cursor.close()  # Cerrar el cursor después de usarlo
+    except Exception as e:
+        print(f"Error al obtener el producto: {e}")
+        return "Error al obtener los detalles del producto.", 500
+    finally:
+        conn.close()  # Asegurarse de cerrar la conexión
+
+    # Verificar si el producto existe
+    if not producto:
+        return "Producto no encontrado.", 404
+
+    # Renderizar la plantilla con los detalles del producto
     return render_template('detalle_producto.html', producto=producto)
+
 
 ############ Sección de Órdenes ###################
 
-# Ruta para el formulario de compra desde el catálogo
 # Ruta para el formulario de compra desde el catálogo
 @app.route('/comprar', methods=['GET', 'POST'])
 def comprar():
@@ -170,7 +247,7 @@ def comprar():
         fecha_vencimiento = request.form['fecha_vencimiento']
         codigo_seguridad = request.form['codigo_seguridad']
 
-        # Llamar al endpoint interno para procesar el pago
+        # Payload para el endpoint de pago
         payload = {
             "numero_tarjeta": numero_tarjeta,
             "fecha_vencimiento": fecha_vencimiento,
@@ -179,127 +256,263 @@ def comprar():
             "descripcion_comercio": "Compra en RetroNintendo"
         }
 
-        response = requests.post("http://127.0.0.1:5000/procesar_compra", data=payload)
-        response_data = response.json()
+        try:
+            # Llamar al endpoint de procesamiento de pagos
+            response = requests.post("http://127.0.0.1:5000/procesar_compra", json=payload)
+            response_data = response.json()
 
-        # Verificar si el pago fue exitoso
-        if response.status_code == 200:
-            # Continuar con el registro de la orden si el pago es exitoso
-            cursor = conn.cursor()
-            query_orden = "INSERT INTO Ordenes (cliente_nombre, tipo_orden, total, fecha, producto_nombre) VALUES (?, ?, ?, GETDATE(), ?)"
-            cursor.execute(query_orden, (cliente_nombre, tipo_orden, total, producto_nombre))
+            if response.status_code == 200:
+                # Conectar a la base de datos
+                conn = get_db_connection(CONN_STR_PRINCIPAL)
+                if conn is None:
+                    return "Error al conectar con la base de datos.", 500
 
-            # Obtener el ID de la orden recién insertada
-            orden_id = cursor.execute("SELECT SCOPE_IDENTITY()").fetchone()[0]
+                try:
+                    cursor = conn.cursor()
+                    # Insertar la orden en la tabla Ordenes
+                    query_orden = """
+                        INSERT INTO Ordenes (cliente_nombre, tipo_orden, total, fecha, producto_nombre)
+                        VALUES (?, ?, ?, GETDATE(), ?)
+                    """
+                    cursor.execute(query_orden, (cliente_nombre, tipo_orden, total, producto_nombre))
 
-            # Reducir la cantidad disponible en 1 en el inventario
-            cursor.execute("UPDATE Inventario SET cantidad_disponible = cantidad_disponible - 1 WHERE nombre_articulo = ?", producto_nombre)
+                    # Obtener el ID de la orden recién creada
+                    orden_id = cursor.execute("SELECT SCOPE_IDENTITY()").fetchone()[0]
 
-            # Llamar al procedimiento almacenado para insertar en ReporteVentas
-            cursor.execute("EXEC InsertarEnReporteVentas ?, ?, ?, ?", producto_nombre, 1, total, orden_id)
+                    # Reducir la cantidad disponible en el inventario
+                    cursor.execute("""
+                        UPDATE Inventario
+                        SET cantidad_disponible = cantidad_disponible - 1
+                        WHERE nombre_articulo = ?
+                    """, producto_nombre)
 
-            # Si el tipo de orden es Envío Express, insertar en PedidosExpress
-            if tipo_orden == "Envío Express":
-                direccion_entrega = request.form['direccion_entrega']
-                estado_entrega = "En proceso"
-                cursor.execute("EXEC InsertarPedidoExpress ?, ?, ?, ?", cliente_nombre, direccion_entrega, estado_entrega, orden_id)
+                    # Insertar en el reporte de ventas
+                    cursor.execute("EXEC InsertarEnReporteVentas ?, ?, ?, ?", producto_nombre, 1, total, orden_id)
 
-            # Guardar los cambios en la base de datos
-            conn.commit()
-            return redirect('/gestor_ordenes')
-        else:
-            # Si el pago falla, mostrar el error
-            return f"Error en el pago: {response_data.get('error', 'Error desconocido')}"
+                    # Manejar los pedidos express
+                    if tipo_orden == "Envío Express":
+                        direccion_entrega = request.form['direccion_entrega']
+                        estado_entrega = "En proceso"
+                        cursor.execute("""
+                            EXEC InsertarPedidoExpress ?, ?, ?, ?
+                        """, cliente_nombre, direccion_entrega, estado_entrega, orden_id)
 
-    # Obtener el producto seleccionado
+                    # Guardar los cambios
+                    conn.commit()
+                except Exception as e:
+                    conn.rollback()
+                    print(f"Error al procesar la compra: {e}")
+                    return "Error al procesar la compra en la base de datos.", 500
+                finally:
+                    cursor.close()
+                    conn.close()
+
+                # Redirigir al gestor de órdenes
+                return redirect('/gestor_ordenes')
+            else:
+                # Manejo de errores en el procesamiento del pago
+                error_msg = response_data.get('error', 'Error desconocido')
+                return f"Error en el pago: {error_msg}", 400
+
+        except requests.RequestException as e:
+            print(f"Error al conectar al servicio de pago: {e}")
+            return "Error al conectar con el servicio de pago.", 500
+
+    # Si el método es GET, obtener los detalles del producto
     item_id = request.args.get('item_id')
-    cursor = conn.cursor()
-    cursor.execute("SELECT nombre_articulo, precio FROM Inventario WHERE item_id = ?", item_id)
-    producto = cursor.fetchone()
-    producto_nombre = producto[0]
-    producto_precio = producto[1]
+    conn = get_db_connection(CONN_STR_PRINCIPAL)
+    if conn is None:
+        return "Error al conectar con la base de datos.", 500
 
+    try:
+        cursor = conn.cursor()
+        cursor.execute("""
+            SELECT nombre_articulo, precio
+            FROM Inventario
+            WHERE item_id = ?
+        """, (item_id,))
+        producto = cursor.fetchone()
+        if not producto:
+            return "Producto no encontrado.", 404
+
+        producto_nombre = producto[0]
+        producto_precio = producto[1]
+    except Exception as e:
+        print(f"Error al obtener los detalles del producto: {e}")
+        return "Error al obtener los detalles del producto.", 500
+    finally:
+        cursor.close()
+        conn.close()
+
+    # Renderizar la plantilla de compra
     return render_template('comprar.html', producto_nombre=producto_nombre, producto_precio=producto_precio)
 
 
 # Ruta para el gestor de órdenes
 @app.route('/gestor_ordenes')
 def gestor_ordenes():
-    cursor = conn.cursor()
-    query = """
-        SELECT orden_id, cliente_nombre, producto_nombre, tipo_orden, total 
-        FROM Ordenes
-    """
-    cursor.execute(query)
-    ordenes = cursor.fetchall()
+    # Conectar a la base de datos
+    conn = get_db_connection(CONN_STR_PRINCIPAL)  # Usar la función de conexión
+    if conn is None:
+        return "Error al conectar con la base de datos.", 500
+
+    try:
+        cursor = conn.cursor()
+        query = """
+            SELECT orden_id, cliente_nombre, producto_nombre, tipo_orden, total
+            FROM Ordenes
+        """
+        cursor.execute(query)
+        ordenes = cursor.fetchall()
+        cursor.close()  # Cerrar el cursor después de usarlo
+    except Exception as e:
+        print(f"Error al obtener las órdenes: {e}")
+        return "Error al obtener las órdenes.", 500
+    finally:
+        conn.close()  # Asegurarse de cerrar la conexión
 
     # Añadir el código de rastreo para las órdenes de tipo "Envío Express"
     ordenes_con_rastreo = []
     for orden in ordenes:
-        codigo_rastreo = f"RN-{orden.orden_id}" if orden.tipo_orden == "Envío Express" else ""
+        codigo_rastreo = f"RN-{orden[0]}" if orden[3] == "Envío Express" else ""
         ordenes_con_rastreo.append({
-            "orden_id": orden.orden_id,
-            "cliente_nombre": orden.cliente_nombre,
-            "producto_nombre": orden.producto_nombre,
-            "tipo_orden": orden.tipo_orden,
-            "total": orden.total,
+            "orden_id": orden[0],
+            "cliente_nombre": orden[1],
+            "producto_nombre": orden[2],
+            "tipo_orden": orden[3],
+            "total": orden[4],
             "codigo_rastreo": codigo_rastreo
         })
 
+    # Renderizar la plantilla con las órdenes
     return render_template('gestor_ordenes.html', ordenes=ordenes_con_rastreo)
+
 
 
 
 # Ruta para ver detalles de una orden
 @app.route('/ver_orden/<int:orden_id>')
 def ver_orden(orden_id):
-    cursor = conn.cursor()
-    query = "SELECT orden_id, cliente_nombre, tipo_orden, total, fecha FROM Ordenes WHERE orden_id = ?"
-    cursor.execute(query, orden_id)
-    orden = cursor.fetchone()
+    # Conectar a la base de datos
+    conn = get_db_connection(CONN_STR_PRINCIPAL)  # Usar la función de conexión
+    if conn is None:
+        return "Error al conectar con la base de datos.", 500
 
+    try:
+        cursor = conn.cursor()
+        query = """
+            SELECT orden_id, cliente_nombre, tipo_orden, total, fecha 
+            FROM Ordenes 
+            WHERE orden_id = ?
+        """
+        cursor.execute(query, (orden_id,))  # Usar tuple para evitar errores de parámetros
+        orden = cursor.fetchone()
+        cursor.close()  # Cerrar el cursor después de usarlo
+    except Exception as e:
+        print(f"Error al obtener la orden: {e}")
+        return "Error al obtener los detalles de la orden.", 500
+    finally:
+        conn.close()  # Asegurarse de cerrar la conexión
+
+    # Verificar si la orden existe
+    if not orden:
+        return "Orden no encontrada.", 404
+
+    # Renderizar la plantilla con los detalles de la orden
     return render_template('ver_orden.html', orden=orden)
+
 
 # Ruta para procesar una orden (cambiar estado a procesado)
 @app.route('/procesar_orden/<int:orden_id>')
 def procesar_orden(orden_id):
-    cursor = conn.cursor()
-    query = "UPDATE Ordenes SET estado='Procesado' WHERE orden_id = ?"
-    cursor.execute(query, orden_id)
-    conn.commit()
+    # Conectar a la base de datos
+    conn = get_db_connection(CONN_STR_PRINCIPAL)  # Usar la función de conexión
+    if conn is None:
+        return "Error al conectar con la base de datos.", 500
 
+    try:
+        cursor = conn.cursor()
+        query = "UPDATE Ordenes SET estado='Procesado' WHERE orden_id = ?"
+        cursor.execute(query, (orden_id,))  # Usar tuple para evitar errores
+        conn.commit()  # Confirmar los cambios
+        cursor.close()  # Cerrar el cursor después de usarlo
+    except Exception as e:
+        print(f"Error al procesar la orden: {e}")
+        return "Error al procesar la orden.", 500
+    finally:
+        conn.close()  # Asegurarse de cerrar la conexión
+
+    # Redirigir al gestor de órdenes después de procesar
     return redirect('/gestor_ordenes')
+
 
 
 ########### Reporte###############
 @app.route('/reporte_ventas')
 def reporte_ventas():
-    # Consultar los datos de la tabla de ReporteVentas
-    cursor = conn.cursor()
-    query = "SELECT producto, SUM(cantidad_vendida) as total_vendido, SUM(ingresos) as total_ingresos FROM ReporteVentas GROUP BY producto"
-    cursor.execute(query)
-    ventas = cursor.fetchall()
+    # Conectar a la base de datos
+    conn = get_db_connection(CONN_STR_PRINCIPAL)  # Usar la función de conexión
+    if conn is None:
+        return "Error al conectar con la base de datos.", 500
+
+    try:
+        cursor = conn.cursor()
+        query = """
+            SELECT producto, 
+                   SUM(cantidad_vendida) AS total_vendido, 
+                   SUM(ingresos) AS total_ingresos 
+            FROM ReporteVentas 
+            GROUP BY producto
+        """
+        cursor.execute(query)
+        ventas = cursor.fetchall()
+        cursor.close()  # Cerrar el cursor después de usarlo
+    except Exception as e:
+        print(f"Error al consultar el reporte de ventas: {e}")
+        return "Error al consultar el reporte de ventas.", 500
+    finally:
+        conn.close()  # Asegurarse de cerrar la conexión
 
     # Preparar los datos para el gráfico
     productos = [venta[0] for venta in ventas]
     cantidades = [venta[1] for venta in ventas]
     ingresos = [venta[2] for venta in ventas]
 
-    return render_template('reporte_ventas.html', productos=productos, cantidades=cantidades, ingresos=ingresos)
+    # Renderizar la plantilla con los datos del reporte
+    return render_template(
+        'reporte_ventas.html', 
+        productos=productos, 
+        cantidades=cantidades, 
+        ingresos=ingresos
+    )
 
 ###################Pedidos express####
 
 @app.route('/pedidos_express')
 def pedidos_express():
-    cursor = conn.cursor()
-    query = """
-        SELECT express_order_id, cliente_nombre, direccion_entrega, estado_entrega, fecha, quien_recibe
-        FROM PedidosExpress
-    """
-    cursor.execute(query)
-    pedidos = cursor.fetchall()
+    # Conectar a la base de datos
+    conn = get_db_connection(CONN_STR_PRINCIPAL)  # Usar la función de conexión
+    if conn is None:
+        return "Error al conectar con la base de datos.", 500
 
+    try:
+        cursor = conn.cursor()
+        query = """
+            SELECT express_order_id, cliente_nombre, direccion_entrega, estado_entrega, fecha, quien_recibe
+            FROM PedidosExpress
+        """
+        cursor.execute(query)
+        pedidos = cursor.fetchall()
+        cursor.close()  # Cerrar el cursor después de usarlo
+    except Exception as e:
+        print(f"Error al obtener los pedidos express: {e}")
+        return "Error al obtener los pedidos express.", 500
+    finally:
+        conn.close()  # Asegurarse de cerrar la conexión
+
+    # Renderizar la plantilla con los datos de los pedidos express
     return render_template('pedidos_express.html', pedidos=pedidos)
+
 
 
 ###### envios
@@ -315,31 +528,51 @@ def confirmar_completado():
     express_order_id = request.form['express_order_id']
     quien_recibe = request.form['quien_recibe']
 
-    cursor = conn.cursor()
+    # Conectar a la base de datos
+    conn = get_db_connection(CONN_STR_PRINCIPAL)  # Usar la función de conexión
+    if conn is None:
+        return "Error al conectar con la base de datos.", 500
 
-    # Actualizar el estado y quien recibe en la tabla PedidosExpress
-    query_pedidos = """
-        UPDATE PedidosExpress 
-        SET estado_entrega = 'Completado', quien_recibe = ?
-        WHERE express_order_id = ?
-    """
-    cursor.execute(query_pedidos, (quien_recibe, express_order_id))
+    try:
+        cursor = conn.cursor()
 
-    # Actualizar la tabla Envios con quien recibe
-    query_envios = """
-        UPDATE Envios 
-        SET quien_recibe = ? 
-        WHERE envio_id = (
-            SELECT envio_id FROM Envios WHERE item_id = (
-                SELECT item_id FROM PedidosExpress WHERE express_order_id = ?
+        # Actualizar el estado y quien recibe en la tabla PedidosExpress
+        query_pedidos = """
+            UPDATE PedidosExpress 
+            SET estado_entrega = 'Completado', quien_recibe = ?
+            WHERE express_order_id = ?
+        """
+        cursor.execute(query_pedidos, (quien_recibe, express_order_id))
+
+        # Actualizar la tabla Envios con quien recibe
+        query_envios = """
+            UPDATE Envios 
+            SET quien_recibe = ? 
+            WHERE envio_id = (
+                SELECT envio_id 
+                FROM Envios 
+                WHERE item_id = (
+                    SELECT item_id 
+                    FROM PedidosExpress 
+                    WHERE express_order_id = ?
+                )
             )
-        )
-    """
-    cursor.execute(query_envios, (quien_recibe, express_order_id))
+        """
+        cursor.execute(query_envios, (quien_recibe, express_order_id))
 
-    conn.commit()
+        # Confirmar los cambios
+        conn.commit()
+        cursor.close()  # Cerrar el cursor después de usarlo
+    except Exception as e:
+        conn.rollback()  # Revertir los cambios en caso de error
+        print(f"Error al confirmar el completado del pedido: {e}")
+        return "Error al confirmar el completado del pedido.", 500
+    finally:
+        conn.close()  # Asegurarse de cerrar la conexión
 
+    # Redirigir a la página de pedidos express
     return redirect('/pedidos_express')
+
 
 
 
@@ -368,10 +601,26 @@ def login():
             correo = request.form['correo']
             password = request.form['password']
 
-        cursor = conn.cursor()
-        query = "SELECT usuario_id, nombre_usuario, password_hash, intentos_fallidos, cuenta_bloqueada, fecha_registro FROM Usuarios WHERE correo = ?"
-        cursor.execute(query, correo)
-        usuario = cursor.fetchone()
+        # Conectar a la base de datos
+        conn = get_db_connection(CONN_STR_PRINCIPAL)  # Usar la función de conexión
+        if conn is None:
+            return "Error al conectar con la base de datos.", 500
+
+        try:
+            cursor = conn.cursor()
+            query = """
+                SELECT usuario_id, nombre_usuario, password_hash, intentos_fallidos, cuenta_bloqueada, fecha_registro
+                FROM Usuarios 
+                WHERE correo = ?
+            """
+            cursor.execute(query, (correo,))
+            usuario = cursor.fetchone()
+        except Exception as e:
+            print(f"Error al consultar el usuario: {e}")
+            return "Error al procesar la solicitud.", 500
+        finally:
+            cursor.close()
+            conn.close()
 
         if usuario:
             usuario_id, nombre_usuario, password_hash, intentos_fallidos, cuenta_bloqueada, fecha_registro = usuario
@@ -383,11 +632,7 @@ def login():
             # Verificar si la cuenta está bloqueada
             if cuenta_bloqueada:
                 mensaje = "Cuenta bloqueada. Verifique su correo para desbloquear."
-                if request.is_json:
-                    return jsonify(success=False, message=mensaje)
-                else:
-                    flash(mensaje)
-                    return redirect(url_for('solicitar_restablecimiento'))
+                return manejar_respuesta(request.is_json, mensaje, url_for('solicitar_restablecimiento'))
             
             # Calcular si la contraseña tiene más de 90 días
             fecha_vencimiento = fecha_registro + timedelta(days=90)
@@ -399,11 +644,7 @@ def login():
                 enviar_codigo_verificacion(correo, codigo_actualizacion, "actualizacion")
                 
                 mensaje = "Tu contraseña ha expirado. Te hemos enviado un código de verificación para actualizarla."
-                if request.is_json:
-                    return jsonify(success=False, message=mensaje)
-                else:
-                    flash(mensaje)
-                    return redirect(url_for('verificar_codigo_actualizacion'))
+                return manejar_respuesta(request.is_json, mensaje, url_for('verificar_codigo_actualizacion'))
 
             # Verificar la contraseña
             if check_password_hash(password_hash, password):
@@ -415,49 +656,50 @@ def login():
                 registrar_auditoria(usuario_id, "Inicio de sesión", "Usuario inició sesión con éxito")
 
                 mensaje = "Código de verificación enviado a tu correo."
-                if request.is_json:
-                    return jsonify(success=True)
-                else:
-                    flash(mensaje)
-                    return redirect(url_for('verificar_codigo'))
+                return manejar_respuesta(request.is_json, mensaje, url_for('verificar_codigo'))
             else:
-                # Manejo de intentos fallidos
-                intentos_fallidos = (intentos_fallidos or 0) + 1
-                query = "UPDATE Usuarios SET intentos_fallidos = ? WHERE usuario_id = ?"
-                cursor.execute(query, (intentos_fallidos, usuario_id))
-                conn.commit()
-
-                registrar_auditoria(usuario_id, "Intento fallido de inicio de sesión", "Intento fallido de inicio de sesión")
-              
-                if intentos_fallidos >= 3:
-                    query = "UPDATE Usuarios SET cuenta_bloqueada = 1 WHERE usuario_id = ?"
-                    cursor.execute(query, usuario_id)
-                    conn.commit()
-                    mensaje = "Cuenta bloqueada por intentos fallidos."
-                    
-                    codigo_desbloqueo = random.randint(100000, 999999)
-                    session['codigo_desbloqueo'] = codigo_desbloqueo
-                    enviar_codigo_verificacion(correo, codigo_desbloqueo, "desbloqueo")
-
-                    if request.is_json:
-                        return jsonify(success=False, message=mensaje)
-                    else:
-                        flash(mensaje)
-                        return redirect(url_for('solicitar_restablecimiento'))
-                else:
-                    mensaje = "Credenciales incorrectas."
-                    if request.is_json:
-                        return jsonify(success=False, message=mensaje)
-                    else:
-                        flash(mensaje)
+                return manejar_intentos_fallidos(usuario_id, intentos_fallidos, correo, request.is_json)
         else:
             mensaje = "Usuario no encontrado."
-            if request.is_json:
-                return jsonify(success=False, message=mensaje)
-            else:
-                flash(mensaje)
+            return manejar_respuesta(request.is_json, mensaje)
 
     return render_template('login.html')
+
+# Función auxiliar para manejar la respuesta según el tipo de solicitud
+def manejar_respuesta(es_json, mensaje, redireccion=None):
+    if es_json:
+        return jsonify(success=bool(redireccion), message=mensaje)
+    else:
+        flash(mensaje)
+        return redirect(redireccion) if redireccion else render_template('login.html')
+
+# Función auxiliar para manejar intentos fallidos
+def manejar_intentos_fallidos(usuario_id, intentos_fallidos, correo, es_json):
+    intentos_fallidos = (intentos_fallidos or 0) + 1
+    conn = get_db_connection(CONN_STR_PRINCIPAL)
+    try:
+        cursor = conn.cursor()
+        cursor.execute("UPDATE Usuarios SET intentos_fallidos = ? WHERE usuario_id = ?", (intentos_fallidos, usuario_id))
+        conn.commit()
+        registrar_auditoria(usuario_id, "Intento fallido de inicio de sesión", "Intento fallido de inicio de sesión")
+        
+        if intentos_fallidos >= 3:
+            cursor.execute("UPDATE Usuarios SET cuenta_bloqueada = 1 WHERE usuario_id = ?", (usuario_id,))
+            conn.commit()
+            codigo_desbloqueo = random.randint(100000, 999999)
+            session['codigo_desbloqueo'] = codigo_desbloqueo
+            enviar_codigo_verificacion(correo, codigo_desbloqueo, "desbloqueo")
+            mensaje = "Cuenta bloqueada por intentos fallidos."
+            return manejar_respuesta(es_json, mensaje, url_for('solicitar_restablecimiento'))
+        else:
+            mensaje = "Credenciales incorrectas."
+            return manejar_respuesta(es_json, mensaje)
+    except Exception as e:
+        print(f"Error al manejar intentos fallidos: {e}")
+        return "Error al procesar los intentos fallidos.", 500
+    finally:
+        conn.close()
+
 
 
 
@@ -490,52 +732,60 @@ def actualizar_contrasena():
             return redirect(url_for('actualizar_contrasena'))
 
         # Verificar que la nueva contraseña cumpla con los requisitos
-        if len(nueva_password) < 8 or len(nueva_password) > 14 or not any(char.islower() for char in nueva_password) or not any(char.isupper() for char in nueva_password) or not any(char in "!@#$%^&*()-_+=" for char in nueva_password):
-            flash("La contraseña no cumple con los requisitos.")
+        if (len(nueva_password) < 8 or len(nueva_password) > 14 or 
+            not any(char.islower() for char in nueva_password) or 
+            not any(char.isupper() for char in nueva_password) or 
+            not any(char in "!@#$%^&*()-_+=" for char in nueva_password)):
+            flash("La contraseña no cumple con los requisitos. Debe tener entre 8 y 14 caracteres, incluir al menos una letra mayúscula, una minúscula y un carácter especial.")
             return redirect(url_for('actualizar_contrasena'))
 
-        cursor = conn.cursor()
+        # Conectar a la base de datos
+        conn = get_db_connection(CONN_STR_PRINCIPAL)
+        if conn is None:
+            flash("Error al conectar con la base de datos.")
+            return redirect(url_for('actualizar_contrasena'))
 
-        # Verificar si el correo existe en la base de datos
-        query = "SELECT usuario_id, password_hash FROM Usuarios WHERE correo = ?"
-        cursor.execute(query, correo)
-        resultado = cursor.fetchone()
+        try:
+            cursor = conn.cursor()
 
-        if resultado:
-            usuario_id = resultado[0]
-            password_hash_actual = resultado[1]
+            # Verificar si el correo existe en la base de datos
+            query = "SELECT usuario_id, password_hash FROM Usuarios WHERE correo = ?"
+            cursor.execute(query, (correo,))
+            resultado = cursor.fetchone()
 
-            # Verificar si la nueva contraseña es igual a la anterior
-            if check_password_hash(password_hash_actual, nueva_password):
-                flash("La nueva contraseña no puede ser igual a la anterior.")
-                return redirect(url_for('actualizar_contrasena'))
+            if resultado:
+                usuario_id = resultado[0]
+                password_hash_actual = resultado[1]
 
-            # Generar el hash de la nueva contraseña y formatear la fecha actual
-            nuevo_password_hash = generate_password_hash(nueva_password)
-            fecha_actual = datetime.now().strftime('%Y-%m-%d')
+                # Verificar si la nueva contraseña es igual a la anterior
+                if check_password_hash(password_hash_actual, nueva_password):
+                    flash("La nueva contraseña no puede ser igual a la anterior.")
+                    return redirect(url_for('actualizar_contrasena'))
 
-            try:
-                # Actualizar en la base de datos usando el correo
+                # Generar el hash de la nueva contraseña
+                nuevo_password_hash = generate_password_hash(nueva_password)
+                fecha_actual = datetime.now().strftime('%Y-%m-%d')
+
+                # Actualizar en la base de datos
                 update_query = "UPDATE Usuarios SET password_hash = ?, fecha_registro = ? WHERE correo = ?"
                 cursor.execute(update_query, (nuevo_password_hash, fecha_actual, correo))
-                conn.commit()  # Confirmar los cambios
+                conn.commit()
 
                 flash("Contraseña actualizada exitosamente.")
                 return redirect(url_for('login'))
-
-            except pyodbc.Error as e:
-                # Capturar y mostrar el error
-                print(f"Error al actualizar la contraseña: {e}")
-                flash("Error al actualizar la contraseña. Intenta de nuevo.")
-                conn.rollback()  # Revertir cambios en caso de error
+            else:
+                flash("Correo no encontrado.")
                 return redirect(url_for('actualizar_contrasena'))
-
-        else:
-            flash("Correo no encontrado.")
+        except pyodbc.Error as e:
+            print(f"Error al actualizar la contraseña: {e}")
+            flash("Error al actualizar la contraseña. Intenta de nuevo.")
             return redirect(url_for('actualizar_contrasena'))
+        finally:
+            conn.close()  # Asegurarse de cerrar la conexión
 
     # Mostrar la página de actualización de contraseña en caso de una solicitud GET
     return render_template('actualizar_contrasena.html')
+
 
 # Implementación de la doble verificación y el envío de código de verificación
 def generar_codigo_verificacion():
@@ -578,26 +828,43 @@ def enviar_codigo_verificacion(correo, codigo, tipo):
 @app.route('/restablecer', methods=['GET', 'POST'])
 def restablecer():
     if request.method == 'POST':
-        correo = request.form.get('correo')  # Cambia a .get para evitar KeyError
+        correo = request.form.get('correo')  # Usar .get para evitar KeyError si el campo está vacío
         if not correo:
             flash("Por favor, proporciona un correo válido.")
-            return render_template('restablecer.html')
+            return redirect(url_for('restablecer'))
 
-        cursor = conn.cursor()
-        query = "SELECT usuario_id FROM Usuarios WHERE correo = ? AND cuenta_bloqueada = 1"
-        cursor.execute(query, correo)
-        usuario = cursor.fetchone()
+        # Conectar a la base de datos
+        conn = get_db_connection(CONN_STR_PRINCIPAL)
+        if conn is None:
+            flash("Error al conectar con la base de datos.")
+            return redirect(url_for('restablecer'))
 
-        if usuario:
-            session['usuario_id_temp'] = usuario[0]
-            codigo_desbloqueo = random.randint(100000, 999999)
-            session['codigo_desbloqueo'] = codigo_desbloqueo
-            enviar_codigo_verificacion(correo, codigo_desbloqueo, "desbloqueo")
-            flash("Código de desbloqueo enviado a tu correo.")
-            return redirect(url_for('verificar_desbloqueo'))
-        else:
-            flash("Correo no encontrado o cuenta no está bloqueada.")
-    
+        try:
+            cursor = conn.cursor()
+            query = "SELECT usuario_id FROM Usuarios WHERE correo = ? AND cuenta_bloqueada = 1"
+            cursor.execute(query, (correo,))
+            usuario = cursor.fetchone()
+
+            if usuario:
+                session['usuario_id_temp'] = usuario[0]
+
+                # Generar un código de desbloqueo y guardarlo en la sesión
+                codigo_desbloqueo = random.randint(100000, 999999)
+                session['codigo_desbloqueo'] = codigo_desbloqueo
+
+                # Enviar el código de desbloqueo por correo
+                enviar_codigo_verificacion(correo, codigo_desbloqueo, "desbloqueo")
+                flash("Código de desbloqueo enviado a tu correo.")
+                return redirect(url_for('verificar_desbloqueo'))
+            else:
+                flash("Correo no encontrado o la cuenta no está bloqueada.")
+                return redirect(url_for('restablecer'))
+        except Exception as e:
+            print(f"Error al consultar la cuenta bloqueada: {e}")
+            flash("Ocurrió un error al procesar la solicitud. Intenta nuevamente.")
+            return redirect(url_for('restablecer'))
+        finally:
+            conn.close()  # Asegurarse de cerrar la conexión
     return render_template('restablecer.html')
 
 
@@ -606,19 +873,47 @@ def restablecer():
 @app.route('/verificar_desbloqueo', methods=['GET', 'POST'])
 def verificar_desbloqueo():
     if request.method == 'POST':
-        codigo_usuario = request.form['codigo']
-        if codigo_usuario == str(session.get('codigo_desbloqueo')):
+        codigo_usuario = request.form.get('codigo')  # Usar .get para evitar KeyError
+        codigo_desbloqueo = session.get('codigo_desbloqueo')
+
+        if not codigo_usuario:
+            flash("Por favor, ingresa el código de desbloqueo.")
+            return redirect(url_for('verificar_desbloqueo'))
+
+        if codigo_usuario == str(codigo_desbloqueo):
             usuario_id = session.pop('usuario_id_temp', None)
-            cursor = conn.cursor()
-            query = "UPDATE Usuarios SET intentos_fallidos = 0, cuenta_bloqueada = 0 WHERE usuario_id = ?"
-            cursor.execute(query, usuario_id)
-            conn.commit()
-            registrar_auditoria(usuario_id, "Cuenta desbloqueada", "Cuenta desbloqueada") #auditoria
-            session.pop('codigo_desbloqueo', None)
-            flash("Cuenta desbloqueada. Por favor, inicia sesión.")
-            return redirect(url_for('login'))
+            if not usuario_id:
+                flash("No se pudo identificar al usuario. Intenta nuevamente.")
+                return redirect(url_for('restablecer'))
+
+            # Conectar a la base de datos
+            conn = get_db_connection(CONN_STR_PRINCIPAL)
+            if conn is None:
+                flash("Error al conectar con la base de datos.")
+                return redirect(url_for('verificar_desbloqueo'))
+
+            try:
+                cursor = conn.cursor()
+                # Desbloquear la cuenta y resetear intentos fallidos
+                query = "UPDATE Usuarios SET intentos_fallidos = 0, cuenta_bloqueada = 0 WHERE usuario_id = ?"
+                cursor.execute(query, (usuario_id,))
+                conn.commit()
+
+                # Registrar la acción en la auditoría
+                registrar_auditoria(usuario_id, "Cuenta desbloqueada", "Cuenta desbloqueada exitosamente")
+                session.pop('codigo_desbloqueo', None)  # Eliminar el código de desbloqueo de la sesión
+                flash("Cuenta desbloqueada. Por favor, inicia sesión.")
+                return redirect(url_for('login'))
+            except Exception as e:
+                print(f"Error al desbloquear la cuenta: {e}")
+                flash("Error al desbloquear la cuenta. Intenta nuevamente.")
+                return redirect(url_for('verificar_desbloqueo'))
+            finally:
+                conn.close()  # Asegurarse de cerrar la conexión
         else:
-            flash("Código incorrecto. Intenta de nuevo.")
+            flash("Código incorrecto. Intenta nuevamente.")
+            return redirect(url_for('verificar_desbloqueo'))
+
     return render_template('verificar_desbloqueo.html')
 
 
@@ -628,17 +923,53 @@ def verificar_desbloqueo():
 @app.route('/verificar_codigo', methods=['GET', 'POST'])
 def verificar_codigo():
     if request.method == 'POST':
-        codigo_usuario = request.form['codigo']
-        if codigo_usuario == str(session.get('codigo_verificacion')):
-            session.pop('codigo_verificacion', None)
-            session['usuario_id'] = session.pop('usuario_id_temp', None)
-            cursor = conn.cursor()
-            cursor.execute("SELECT nombre_usuario FROM Usuarios WHERE usuario_id = ?", session['usuario_id'])
-            session['nombre_usuario'] = cursor.fetchone()[0]
-            flash("Inicio de sesión exitoso.")
-            return redirect(url_for('index'))
+        codigo_usuario = request.form.get('codigo')  # Usar .get para evitar KeyError
+        codigo_verificacion = session.get('codigo_verificacion')
+
+        # Validar que se haya ingresado un código
+        if not codigo_usuario:
+            flash("Por favor, ingresa el código de verificación.")
+            return redirect(url_for('verificar_codigo'))
+
+        # Comparar el código ingresado con el almacenado en la sesión
+        if codigo_usuario == str(codigo_verificacion):
+            session.pop('codigo_verificacion', None)  # Eliminar el código de la sesión
+
+            usuario_id_temp = session.pop('usuario_id_temp', None)
+            if not usuario_id_temp:
+                flash("No se pudo identificar al usuario. Intenta nuevamente.")
+                return redirect(url_for('login'))
+
+            # Conectar a la base de datos
+            conn = get_db_connection(CONN_STR_PRINCIPAL)
+            if conn is None:
+                flash("Error al conectar con la base de datos.")
+                return redirect(url_for('verificar_codigo'))
+
+            try:
+                cursor = conn.cursor()
+                # Obtener el nombre del usuario con base en el usuario_id
+                cursor.execute("SELECT nombre_usuario FROM Usuarios WHERE usuario_id = ?", (usuario_id_temp,))
+                resultado = cursor.fetchone()
+
+                if resultado:
+                    session['usuario_id'] = usuario_id_temp
+                    session['nombre_usuario'] = resultado[0]
+                    flash("Inicio de sesión exitoso.")
+                    return redirect(url_for('index'))
+                else:
+                    flash("No se pudo recuperar la información del usuario. Intenta nuevamente.")
+                    return redirect(url_for('login'))
+            except Exception as e:
+                print(f"Error al verificar el código: {e}")
+                flash("Error al verificar el código. Intenta nuevamente.")
+                return redirect(url_for('verificar_codigo'))
+            finally:
+                conn.close()  # Asegurarse de cerrar la conexión
         else:
-            flash("Código incorrecto. Intenta de nuevo.")
+            flash("Código incorrecto. Intenta nuevamente.")
+            return redirect(url_for('verificar_codigo'))
+
     return render_template('verificar_codigo.html')
 
 
@@ -649,40 +980,51 @@ def verificar_codigo():
 def solicitar_restablecimiento():
     if request.method == 'POST':
         correo = request.form.get('correo')  # Obtener el correo del formulario
-        cursor = conn.cursor()
-        query = "SELECT usuario_id FROM Usuarios WHERE correo = ?"
-        cursor.execute(query, correo)
-        usuario = cursor.fetchone()
 
-        if usuario:
-            session['usuario_id_reset'] = usuario[0]
-            
-            # Generar el código de restablecimiento una sola vez
-            codigo_reset = random.randint(100000, 999999)
-            session['codigo_reset'] = codigo_reset
-            
-            # Enviar el correo con el código
-            try:
+        # Validar que el correo no esté vacío
+        if not correo:
+            flash("Por favor, proporciona un correo válido.")
+            return redirect(url_for('solicitar_restablecimiento'))
+
+        # Conectar a la base de datos
+        conn = get_db_connection(CONN_STR_PRINCIPAL)
+        if conn is None:
+            flash("Error al conectar con la base de datos.")
+            return redirect(url_for('solicitar_restablecimiento'))
+
+        try:
+            cursor = conn.cursor()
+            query = "SELECT usuario_id FROM Usuarios WHERE correo = ?"
+            cursor.execute(query, (correo,))
+            usuario = cursor.fetchone()
+
+            if usuario:
+                session['usuario_id_reset'] = usuario[0]
+
+                # Generar el código de restablecimiento
+                codigo_reset = random.randint(100000, 999999)
+                session['codigo_reset'] = codigo_reset
+
+                # Enviar el correo con el código
                 enviar_codigo_verificacion(correo, codigo_reset, "restablecimiento")
                 print(f"Correo enviado exitosamente a {correo} con el código {codigo_reset}.")
                 flash("Código de verificación enviado a tu correo.")
                 return redirect(url_for('verificar_pregunta_seguridad'))
-            except Exception as e:
-                print(f"Error al enviar el correo: {e}")
-                flash("Hubo un problema al enviar el correo. Inténtalo más tarde.")
+            else:
+                flash("Correo no encontrado.")
                 return redirect(url_for('solicitar_restablecimiento'))
-        else:
-            flash("Correo no encontrado.")
+        except Exception as e:
+            print(f"Error al procesar la solicitud de restablecimiento: {e}")
+            flash("Ocurrió un error al procesar la solicitud. Intenta nuevamente.")
             return redirect(url_for('solicitar_restablecimiento'))
-
+        finally:
+            conn.close()  # Asegurarse de cerrar la conexión
     return render_template('solicitar_restablecimiento.html')
 
 
 
+
 # Nueva ruta para verificar la respuesta de seguridad
-
-import random
-
 @app.route('/verificar_pregunta_seguridad', methods=['GET', 'POST'])
 def verificar_pregunta_seguridad():
     if 'usuario_id_reset' not in session:
@@ -690,49 +1032,76 @@ def verificar_pregunta_seguridad():
         return redirect(url_for('solicitar_restablecimiento'))
 
     usuario_id = session.get('usuario_id_reset')
-    cursor = conn.cursor()
-    query = "SELECT respuesta1, respuesta2, respuesta3 FROM Usuarios WHERE usuario_id = ?"
-    cursor.execute(query, usuario_id)
-    respuestas = cursor.fetchone()
 
-    if not respuestas:
-        flash("No se encontraron preguntas de seguridad para este usuario.")
+    # Conectar a la base de datos
+    conn = get_db_connection(CONN_STR_PRINCIPAL)
+    if conn is None:
+        flash("Error al conectar con la base de datos.")
         return redirect(url_for('solicitar_restablecimiento'))
 
-    preguntas = [
-        "¿Cuál es tu color favorito?",
-        "¿Cuál es tu juego favorito?",
-        "¿Dónde vives?"
-    ]
+    try:
+        cursor = conn.cursor()
+        query = "SELECT respuesta1, respuesta2, respuesta3 FROM Usuarios WHERE usuario_id = ?"
+        cursor.execute(query, (usuario_id,))
+        respuestas = cursor.fetchone()
 
-    if request.method == 'POST':
-        respuesta_usuario = request.form.get('respuesta')
-        pregunta_index = int(request.form.get('pregunta_index'))
+        if not respuestas:
+            flash("No se encontraron preguntas de seguridad para este usuario.")
+            return redirect(url_for('solicitar_restablecimiento'))
 
-        # Verificar que la respuesta sea correcta
-        if respuesta_usuario.lower() == respuestas[pregunta_index].lower():
-            flash("Pregunta de seguridad verificada. Puedes continuar con el restablecimiento.")
-            return redirect(url_for('verificar_codigo_restablecimiento'))
-        else:
-            flash("Respuesta incorrecta. Intenta nuevamente.")
-            return redirect(url_for('verificar_pregunta_seguridad'))
+        # Lista de preguntas de seguridad
+        preguntas = [
+            "¿Cuál es tu color favorito?",
+            "¿Cuál es tu juego favorito?",
+            "¿Dónde vives?"
+        ]
 
-    # Seleccionar aleatoriamente una pregunta de seguridad
-    pregunta_index = random.randint(0, 2)
-    pregunta_aleatoria = preguntas[pregunta_index]
+        if request.method == 'POST':
+            respuesta_usuario = request.form.get('respuesta')
+            pregunta_index = int(request.form.get('pregunta_index'))
 
-    return render_template('verificar_pregunta_seguridad.html', pregunta_aleatoria=pregunta_aleatoria, pregunta_index=pregunta_index)
+            # Validar que los campos no estén vacíos
+            if not respuesta_usuario:
+                flash("Por favor, responde la pregunta.")
+                return redirect(url_for('verificar_pregunta_seguridad'))
 
+            # Verificar si la respuesta coincide
+            if respuesta_usuario.strip().lower() == respuestas[pregunta_index].strip().lower():
+                flash("Pregunta de seguridad verificada. Puedes continuar con el restablecimiento.")
+                return redirect(url_for('verificar_codigo_restablecimiento'))
+            else:
+                flash("Respuesta incorrecta. Intenta nuevamente.")
+                return redirect(url_for('verificar_pregunta_seguridad'))
+
+        # Seleccionar aleatoriamente una pregunta de seguridad
+        pregunta_index = random.randint(0, 2)
+        pregunta_aleatoria = preguntas[pregunta_index]
+
+        return render_template(
+            'verificar_pregunta_seguridad.html',
+            pregunta_aleatoria=pregunta_aleatoria,
+            pregunta_index=pregunta_index
+        )
+    except Exception as e:
+        print(f"Error al verificar la pregunta de seguridad: {e}")
+        flash("Error al verificar la pregunta de seguridad. Intenta nuevamente.")
+        return redirect(url_for('solicitar_restablecimiento'))
+    finally:
+        conn.close()  # Asegurarse de cerrar la conexión
 
 
 # Ruta para actualizar la nueva contraseña después de la verificación
 @app.route('/actualizar_nueva_contrasena', methods=['GET', 'POST'])
 def actualizar_nueva_contrasena():
     if request.method == 'POST':
-        nueva_password = request.form['nueva_password']
-        confirm_password = request.form['confirm_password']
+        nueva_password = request.form.get('nueva_password')
+        confirm_password = request.form.get('confirm_password')
 
         # Verificar que ambas contraseñas coincidan
+        if not nueva_password or not confirm_password:
+            flash("Por favor, completa todos los campos.")
+            return redirect(url_for('actualizar_nueva_contrasena'))
+
         if nueva_password != confirm_password:
             flash("Las contraseñas no coinciden.")
             return redirect(url_for('actualizar_nueva_contrasena'))
@@ -746,48 +1115,105 @@ def actualizar_nueva_contrasena():
             flash("La contraseña debe tener entre 8 y 14 caracteres, incluir al menos una letra mayúscula, una minúscula, un número y un carácter especial.")
             return redirect(url_for('actualizar_nueva_contrasena'))
 
-        # Usar el usuario_id de la sesión
+        # Obtener usuario_id desde la sesión
         usuario_id = session.get('usuario_id_reset')
-        if usuario_id:
+        if not usuario_id:
+            flash("No se pudo identificar al usuario. Intenta nuevamente.")
+            return redirect(url_for('solicitar_restablecimiento'))
+
+        # Conectar a la base de datos
+        conn = get_db_connection(CONN_STR_PRINCIPAL)
+        if conn is None:
+            flash("Error al conectar con la base de datos.")
+            return redirect(url_for('actualizar_nueva_contrasena'))
+
+        try:
             nuevo_password_hash = generate_password_hash(nueva_password)
             cursor = conn.cursor()
 
-            # Actualizar la contraseña y resetear intentos fallidos y cuenta_bloqueada
-            query = "UPDATE Usuarios SET password_hash = ?, intentos_fallidos = 0, cuenta_bloqueada = 0 WHERE usuario_id = ?"
+            # Actualizar la contraseña y resetear intentos fallidos y cuenta bloqueada
+            query = """
+                UPDATE Usuarios 
+                SET password_hash = ?, intentos_fallidos = 0, cuenta_bloqueada = 0 
+                WHERE usuario_id = ?
+            """
             cursor.execute(query, (nuevo_password_hash, usuario_id))
             conn.commit()
 
             flash("Contraseña actualizada exitosamente. Ahora puedes iniciar sesión.")
+
             # Limpiar variables de sesión
             session.pop('usuario_id_reset', None)
-            session.pop('preguntas_respuestas', None)
-            session.pop('pregunta_index', None)
             session.pop('codigo_reset', None)
             return redirect(url_for('login'))
-        else:
-            flash("Error al restablecer la contraseña. Intenta nuevamente.")
+        except Exception as e:
+            print(f"Error al actualizar la contraseña: {e}")
+            flash("Error al actualizar la contraseña. Intenta nuevamente.")
+            return redirect(url_for('actualizar_nueva_contrasena'))
+        finally:
+            conn.close()  # Asegurar el cierre de la conexión
+
     return render_template('actualizar_nueva_contrasena.html')
 
 
+
 def registrar_auditoria(usuario_id, tipo_evento, detalle=""):
-    cursor = conn.cursor()
-    query = "INSERT INTO Auditoria (usuario_id, tipo_evento, fecha, detalle) VALUES (?, ?, ?, ?)"
-    fecha = datetime.now()
-    cursor.execute(query, (usuario_id, tipo_evento, fecha, detalle))
-    conn.commit()
+    # Conectar a la base de datos
+    conn = get_db_connection(CONN_STR_PRINCIPAL)
+    if conn is None:
+        print("Error al conectar con la base de datos para registrar la auditoría.")
+        return
+
+    try:
+        cursor = conn.cursor()
+        query = """
+            INSERT INTO Auditoria (usuario_id, tipo_evento, fecha, detalle) 
+            VALUES (?, ?, ?, ?)
+        """
+        fecha = datetime.now()
+        cursor.execute(query, (usuario_id, tipo_evento, fecha, detalle))
+        conn.commit()
+        print(f"Auditoría registrada: Usuario {usuario_id}, Evento: {tipo_evento}")
+    except Exception as e:
+        print(f"Error al registrar auditoría: {e}")
+    finally:
+        conn.close()  # Asegurarse de cerrar la conexión
 
 
 # Ruta para la auditoría
 @app.route('/auditoria')
 def auditoria():
-    # Consultar los campos requeridos de la tabla de usuarios y auditoría
-    cursor = conn.cursor()
-    cursor.execute("SELECT usuario_id, nombre_usuario FROM Usuarios")  # Solo traemos los campos necesarios
-    usuarios = cursor.fetchall()
-    cursor.execute("SELECT * FROM Auditoria")
-    auditoria = cursor.fetchall()
+    # Conectar a la base de datos
+    conn = get_db_connection(CONN_STR_PRINCIPAL)
+    if conn is None:
+        flash("Error al conectar con la base de datos.")
+        return redirect(url_for('index'))
 
-    return render_template('auditoria.html', usuarios=usuarios, auditoria=auditoria)
+    try:
+        cursor = conn.cursor()
+
+        # Consultar los usuarios y la auditoría
+        query_usuarios = "SELECT usuario_id, nombre_usuario FROM Usuarios"
+        cursor.execute(query_usuarios)
+        usuarios = cursor.fetchall()
+
+        query_auditoria = """
+            SELECT a.usuario_id, u.nombre_usuario, a.tipo_evento, a.fecha, a.detalle
+            FROM Auditoria a
+            LEFT JOIN Usuarios u ON a.usuario_id = u.usuario_id
+            ORDER BY a.fecha DESC
+        """
+        cursor.execute(query_auditoria)
+        auditoria = cursor.fetchall()
+
+        # Renderizar la plantilla con los datos
+        return render_template('auditoria.html', usuarios=usuarios, auditoria=auditoria)
+    except Exception as e:
+        print(f"Error al consultar la auditoría: {e}")
+        flash("Error al cargar los datos de auditoría. Intenta nuevamente.")
+        return redirect(url_for('index'))
+    finally:
+        conn.close()  # Asegurarse de cerrar la conexión
 
 # Ruta para verificar el código de restablecimiento de contraseña
 
@@ -812,49 +1238,104 @@ def verificar_codigo_restablecimiento():
 @app.route('/get_provincias', methods=['GET'])
 def get_provincias():
     pais = request.args.get('pais')
-    cursor = conn.cursor()
 
-    # Obtener todas las provincias del país seleccionado
-    query = "SELECT DISTINCT provincia FROM Ubicaciones WHERE pais = ?"
-    cursor.execute(query, pais)
-    provincias = cursor.fetchall()
+    # Validar que se proporcionó un país
+    if not pais:
+        return jsonify({"error": "El parámetro 'pais' es requerido."}), 400
 
-    # Crear una lista para enviar en formato JSON
-    provincias_json = [{'provincia': row[0]} for row in provincias]
-    return jsonify(provincias_json)
+    # Conectar a la base de datos
+    conn = get_db_connection(CONN_STR_PRINCIPAL)
+    if conn is None:
+        return jsonify({"error": "No se pudo conectar a la base de datos."}), 500
+
+    try:
+        cursor = conn.cursor()
+
+        # Obtener todas las provincias del país seleccionado
+        query = "SELECT DISTINCT provincia FROM Ubicaciones WHERE pais = ?"
+        cursor.execute(query, pais)
+        provincias = cursor.fetchall()
+
+        # Crear una lista en formato JSON
+        provincias_json = [{'provincia': row[0]} for row in provincias]
+        return jsonify(provincias_json)
+    except Exception as e:
+        print(f"Error al obtener provincias: {e}")
+        return jsonify({"error": "Ocurrió un error al obtener las provincias."}), 500
+    finally:
+        conn.close()  # Asegurar que la conexión se cierra
 
 @app.route('/get_cantones', methods=['GET'])
 def get_cantones():
     provincia = request.args.get('provincia')
-    cursor = conn.cursor()
 
-    # Obtener todos los cantones de la provincia seleccionada
-    query = "SELECT DISTINCT canton FROM Ubicaciones WHERE provincia = ?"
-    cursor.execute(query, provincia)
-    cantones = cursor.fetchall()
+    # Validar que se proporcionó una provincia
+    if not provincia:
+        return jsonify({"error": "El parámetro 'provincia' es requerido."}), 400
 
-    # Crear una lista para enviar en formato JSON
-    cantones_json = [{'canton': row[0]} for row in cantones]
-    return jsonify(cantones_json)
+    # Conectar a la base de datos
+    conn = get_db_connection(CONN_STR_PRINCIPAL)
+    if conn is None:
+        return jsonify({"error": "No se pudo conectar a la base de datos."}), 500
+
+    try:
+        cursor = conn.cursor()
+
+        # Obtener todos los cantones de la provincia seleccionada
+        query = "SELECT DISTINCT canton FROM Ubicaciones WHERE provincia = ?"
+        cursor.execute(query, (provincia,))
+        cantones = cursor.fetchall()
+
+        # Crear una lista en formato JSON
+        cantones_json = [{'canton': row[0]} for row in cantones]
+        return jsonify(cantones_json)
+    except Exception as e:
+        print(f"Error al obtener cantones: {e}")
+        return jsonify({"error": "Ocurrió un error al obtener los cantones."}), 500
+    finally:
+        conn.close()  # Asegurar que la conexión se cierra
+
 
 @app.route('/get_distritos', methods=['GET'])
 def get_distritos():
     canton = request.args.get('canton')
-    cursor = conn.cursor()
 
-    # Obtener todos los distritos del cantón seleccionado
-    query = "SELECT DISTINCT distrito FROM Ubicaciones WHERE canton = ?"
-    cursor.execute(query, canton)
-    distritos = cursor.fetchall()
+    # Validar que se proporcionó un cantón
+    if not canton:
+        return jsonify({"error": "El parámetro 'canton' es requerido."}), 400
 
-    # Crear una lista para enviar en formato JSON
-    distritos_json = [{'distrito': row[0]} for row in distritos]
-    return jsonify(distritos_json)
+    # Conectar a la base de datos
+    conn = get_db_connection(CONN_STR_PRINCIPAL)
+    if conn is None:
+        return jsonify({"error": "No se pudo conectar a la base de datos."}), 500
+
+    try:
+        cursor = conn.cursor()
+
+        # Obtener todos los distritos del cantón seleccionado
+        query = "SELECT DISTINCT distrito FROM Ubicaciones WHERE canton = ?"
+        cursor.execute(query, (canton,))
+        distritos = cursor.fetchall()
+
+        # Crear una lista en formato JSON
+        distritos_json = [{'distrito': row[0]} for row in distritos]
+        return jsonify(distritos_json)
+    except Exception as e:
+        print(f"Error al obtener distritos: {e}")
+        return jsonify({"error": "Ocurrió un error al obtener los distritos."}), 500
+    finally:
+        conn.close()  # Asegurar que la conexión se cierra
 
 
 # Ruta para ver los usuarios registrados y sus ubicaciones
 @app.route('/ver_usuarios')
 def ver_usuarios():
+    # Conectar a la base de datos
+    conn = get_db_connection(CONN_STR_PRINCIPAL)
+    if conn is None:
+        flash("Error al conectar con la base de datos.")
+        return redirect(url_for('index'))
+
     try:
         cursor = conn.cursor()
         query = """
@@ -867,30 +1348,56 @@ def ver_usuarios():
                 ub.canton, 
                 ub.distrito
             FROM Usuarios u
-            LEFT JOIN Ubicaciones ub ON u.pais_id = ub.ubicacion_id
+            LEFT JOIN Ubicaciones ub ON u.ubicacion_id = ub.ubicacion_id
         """
         cursor.execute(query)
         usuarios = cursor.fetchall()
 
+        # Renderizar la plantilla con los datos
         return render_template('ver_usuarios.html', usuarios=usuarios)
     except Exception as e:
         print(f"Ocurrió un error al obtener los usuarios: {e}")
-        return "Error al cargar los usuarios."
-
+        flash("Error al cargar los datos de usuarios. Intenta nuevamente.")
+        return redirect(url_for('index'))
+    finally:
+        conn.close()  # Asegurar que la conexión se cierra
 
 
 
 @app.route('/solicitudes_cotizacion')
 def ver_solicitudes_cotizacion():
-    cursor = conn.cursor()
-    cursor.execute("SELECT * FROM SolicitudesCotizacion")
-    solicitudes = cursor.fetchall()
-    cursor.close()
+    # Conectar a la base de datos
+    conn = get_db_connection(CONN_STR_PRINCIPAL)
+    if conn is None:
+        flash("Error al conectar con la base de datos.")
+        return redirect(url_for('index'))
 
-    # Renderizar el HTML y pasar las solicitudes a la plantilla
-    return render_template('solicitudes_cotizacion.html', solicitudes=solicitudes)
+    try:
+        cursor = conn.cursor()
 
+        # Consultar las solicitudes de cotización
+        query = """
+            SELECT 
+                cotizacion_id,
+                usuario_id,
+                total_estimado,
+                direccion_entrega,
+                email,
+                fecha
+            FROM SolicitudesCotizacion
+            ORDER BY fecha DESC
+        """
+        cursor.execute(query)
+        solicitudes = cursor.fetchall()
 
+        # Renderizar el HTML y pasar las solicitudes a la plantilla
+        return render_template('solicitudes_cotizacion.html', solicitudes=solicitudes)
+    except Exception as e:
+        print(f"Error al obtener las solicitudes de cotización: {e}")
+        flash("Error al cargar las solicitudes de cotización. Intenta nuevamente.")
+        return redirect(url_for('index'))
+    finally:
+        conn.close()  # Asegurar el cierre de la conexión
 
 # Ruta al formulario de verificación de identificación
 @app.route('/verificar_identificacion', methods=['GET', 'POST'])
@@ -1237,43 +1744,52 @@ def solicitud_cotizacion():
 
 @app.route('/api/comparar_precios', methods=['GET'])
 def comparar_precios():
-    try:
-        cursor_competencia = conn_servicios_externo.cursor()
-        cursor_inventario = conn_str.cursor()
+    # Conectar a la base de datos principal y de servicios externos
+    conn_inventario = get_db_connection(CONN_STR_PRINCIPAL)
+    conn_competencia = get_db_connection(CONN_STR_SERVICIOS_EXTERNO)
 
-        cursor_competencia.execute("SELECT item_id, nombre_articulo, precio FROM ProveedorCompetencia")
+    if not conn_inventario or not conn_competencia:
+        return jsonify({"error": "Error al conectar a una o ambas bases de datos."}), 500
+
+    try:
+        cursor_inventario = conn_inventario.cursor()
+        cursor_competencia = conn_competencia.cursor()
+
+        # Obtener los productos de la competencia
+        query_competencia = "SELECT item_id, nombre_articulo, precio FROM ProveedorCompetencia"
+        cursor_competencia.execute(query_competencia)
         competencia_items = cursor_competencia.fetchall()
 
         comparacion_precios = []
 
+        # Comparar cada producto de la competencia con el inventario interno
         for item in competencia_items:
-            print(f"Procesando artículo: {item.nombre_articulo}")  # Log
-            item_id = item.item_id
-            nombre_articulo = item.nombre_articulo
-            precio_competencia = item.precio
+            item_id, nombre_articulo, precio_competencia = item
 
-            cursor_inventario.execute("SELECT precio FROM Inventario WHERE nombre_articulo = ?", nombre_articulo)
+            # Buscar el precio del producto en el inventario interno
+            query_inventario = "SELECT precio FROM Inventario WHERE nombre_articulo = ?"
+            cursor_inventario.execute(query_inventario, (nombre_articulo,))
             inventario_item = cursor_inventario.fetchone()
 
-            if inventario_item:
-                precio_retronintendo = inventario_item.precio
-            else:
-                precio_retronintendo = None
+            precio_retronintendo = inventario_item[0] if inventario_item else None
 
+            # Agregar la comparación a la lista
             comparacion_precios.append({
                 "nombre_articulo": nombre_articulo,
                 "precio_competencia": precio_competencia,
                 "precio_retronintendo": precio_retronintendo
             })
 
-        cursor_competencia.close()
-        cursor_inventario.close()
-
         return jsonify(comparacion_precios)
     except Exception as e:
-        print(f"Error: {e}")  # Log
+        print(f"Error durante la comparación de precios: {e}")
         return jsonify({"error": f"Error interno: {str(e)}"}), 500
-
+    finally:
+        # Asegurar el cierre de conexiones
+        if conn_inventario:
+            conn_inventario.close()
+        if conn_competencia:
+            conn_competencia.close()
 
 
 
@@ -1281,13 +1797,15 @@ def comparar_precios():
 # Endpoint para procesar pagos con tarjeta
 @app.route('/api/pago_tarjeta', methods=['POST'])
 def pago_tarjeta():
+    # Obtener los datos del cuerpo de la solicitud
     data = request.json
-    
+
     # Validar que los datos necesarios estén presentes
     required_fields = ["numero_tarjeta", "fecha_vencimiento", "codigo_seguridad", "monto", "descripcion_comercio"]
     if not all(field in data for field in required_fields):
-        return jsonify({"error": "Datos incompletos"}), 400
-    
+        return jsonify({"error": "Datos incompletos. Por favor, proporciona todos los campos requeridos."}), 400
+
+    # Asignar valores
     numero_tarjeta = data['numero_tarjeta']
     fecha_vencimiento = data['fecha_vencimiento']
     codigo_seguridad = data['codigo_seguridad']
@@ -1296,96 +1814,127 @@ def pago_tarjeta():
     fecha_transaccion = datetime.now()
 
     # Conectar a la base de datos
-    conn = pyodbc.connect(conn_str)
-    cursor = conn.cursor()
+    conn = get_db_connection(CONN_STR_SERVICIOS_EXTERNO)
+    if not conn:
+        return jsonify({"error": "Error al conectar con la base de datos."}), 500
 
-    # Insertar el registro de pago en la base de datos
     try:
-        cursor.execute("""
-            INSERT INTO PagosTarjeta (numero_tarjeta, fecha_vencimiento, codigo_seguridad, monto, descripcion_comercio, fecha_transaccion)
+        cursor = conn.cursor()
+
+        # Insertar el registro de pago en la base de datos
+        query = """
+            INSERT INTO PagosTarjeta (
+                numero_tarjeta, 
+                fecha_vencimiento, 
+                codigo_seguridad, 
+                monto, 
+                descripcion_comercio, 
+                fecha_transaccion
+            ) 
             VALUES (?, ?, ?, ?, ?, ?)
-        """, numero_tarjeta, fecha_vencimiento, codigo_seguridad, monto, descripcion_comercio, fecha_transaccion)
+        """
+        cursor.execute(query, (numero_tarjeta, fecha_vencimiento, codigo_seguridad, monto, descripcion_comercio, fecha_transaccion))
         conn.commit()
+
+        # Confirmación de pago exitosa
+        return jsonify({"mensaje": "Pago procesado exitosamente"}), 200
     except Exception as e:
         conn.rollback()
+        print(f"Error al procesar el pago: {e}")
         return jsonify({"error": f"Error al procesar el pago: {str(e)}"}), 500
     finally:
-        cursor.close()
-        conn.close()
+        conn.close()  # Cerrar la conexión
 
-    # Responder con confirmación de pago
-    return jsonify({"mensaje": "Pago procesado exitosamente"}), 200
 
 
 # Ruta para agregar saldo a la tarjeta
 @app.route('/api/agregar_saldo', methods=['POST'])
 def agregar_saldo():
     data = request.json
+
+    # Validar datos de entrada
     numero_tarjeta = data.get('numero_tarjeta')
     monto = data.get('monto')
 
     if not numero_tarjeta or not monto:
         return jsonify({"error": "Número de tarjeta y monto son requeridos"}), 400
 
-    conn = pyodbc.connect(conn_str)
-    cursor = conn.cursor()
+    # Conectar a la base de datos de Servicios Externos
+    conn = get_db_connection(CONN_STR_SERVICIOS_EXTERNO)
+    if not conn:
+        return jsonify({"error": "Error al conectar con la base de datos de servicios externos."}), 500
 
     try:
-        cursor.execute("SELECT saldo FROM Tarjetas WHERE numero_tarjeta = ?", numero_tarjeta)
+        cursor = conn.cursor()
+
+        # Verificar si la tarjeta existe
+        query_select = "SELECT saldo FROM Tarjetas WHERE numero_tarjeta = ?"
+        cursor.execute(query_select, numero_tarjeta)
         tarjeta = cursor.fetchone()
 
         if not tarjeta:
             return jsonify({"error": "Tarjeta no encontrada"}), 404
 
-        nuevo_saldo = tarjeta[0] + monto
-        cursor.execute("UPDATE Tarjetas SET saldo = ? WHERE numero_tarjeta = ?", nuevo_saldo, numero_tarjeta)
+        # Actualizar el saldo de la tarjeta
+        saldo_actual = tarjeta[0]
+        nuevo_saldo = saldo_actual + monto
+        query_update = "UPDATE Tarjetas SET saldo = ? WHERE numero_tarjeta = ?"
+        cursor.execute(query_update, (nuevo_saldo, numero_tarjeta))
         conn.commit()
 
+        # Devolver respuesta exitosa
         return jsonify({"mensaje": f"Saldo agregado exitosamente. Nuevo saldo: {nuevo_saldo}"}), 200
     except Exception as e:
         conn.rollback()
-        return jsonify({"error": str(e)}), 500
+        print(f"Error al agregar saldo: {e}")
+        return jsonify({"error": f"Error al agregar saldo: {str(e)}"}), 500
     finally:
         cursor.close()
         conn.close()
 
 # Ruta para procesar la compra y descontar saldo
 
-from datetime import datetime
-
 @app.route('/api/procesar_compra', methods=['POST'])
 def procesar_compra():
+    # Obtener datos del cuerpo de la solicitud
     data = request.json
     numero_tarjeta = data.get('numero_tarjeta')
     fecha_vencimiento = data.get('fecha_vencimiento')  # En formato MM/YY (e.g., "12/25")
     codigo_seguridad = data.get('codigo_seguridad')
     monto = data.get('monto')
 
+    # Validar que todos los campos sean proporcionados
     if not all([numero_tarjeta, fecha_vencimiento, codigo_seguridad, monto]):
         return jsonify({"error": "Todos los campos son requeridos"}), 400
 
-    # Convertir monto a Decimal para operaciones con saldo_actual
-    monto = Decimal(monto)
+    try:
+        monto = Decimal(monto)  # Convertir monto a Decimal para evitar errores
+    except Exception:
+        return jsonify({"error": "El monto debe ser un número válido"}), 400
 
-    # Convertir la fecha de vencimiento ingresada a un objeto datetime en formato MM/YY
+    # Validar formato de la fecha de vencimiento
     try:
         fecha_vencimiento_dt = datetime.strptime(fecha_vencimiento, "%m/%y")
     except ValueError:
         return jsonify({"error": "Formato de fecha de vencimiento inválido. Use MM/YY"}), 400
 
-    conn = pyodbc.connect(conn_str)
-    cursor = conn.cursor()
+    # Conectar a la base de datos de Servicios Externos
+    conn = get_db_connection(CONN_STR_SERVICIOS_EXTERNO)
+    if not conn:
+        return jsonify({"error": "Error al conectar con la base de datos de servicios externos."}), 500
 
     try:
-        # Verificar que la tarjeta existe y el código de seguridad coincide
-        cursor.execute("""
+        cursor = conn.cursor()
+
+        # Verificar si la tarjeta existe y si el código de seguridad coincide
+        query_tarjeta = """
             SELECT saldo, codigo_seguridad, fecha_vencimiento
             FROM Tarjetas 
             WHERE numero_tarjeta = ?
-        """, numero_tarjeta)
-        
+        """
+        cursor.execute(query_tarjeta, numero_tarjeta)
         tarjeta = cursor.fetchone()
-        
+
         if not tarjeta:
             return jsonify({"error": "Tarjeta no encontrada"}), 404
 
@@ -1395,29 +1944,32 @@ def procesar_compra():
         if codigo_seguridad != codigo_seguridad_db:
             return jsonify({"error": "Código de seguridad incorrecto"}), 403
 
-        # Convertir fecha_vencimiento_db a cadena en formato MM/YY
-        if isinstance(fecha_vencimiento_db, datetime):
-            fecha_vencimiento_db_str = fecha_vencimiento_db.strftime("%m/%y")
-        else:
-            fecha_vencimiento_db_str = datetime.strptime(fecha_vencimiento_db, "%Y-%m-%d").strftime("%m/%y")
+        # Validar fecha de vencimiento
+        fecha_vencimiento_db_str = datetime.strptime(
+            str(fecha_vencimiento_db), "%Y-%m-%d"
+        ).strftime("%m/%y")
 
-        # Comparar solo el mes y el año en formato MM/YY
         if fecha_vencimiento != fecha_vencimiento_db_str:
             return jsonify({"error": "Fecha de vencimiento incorrecta"}), 403
 
-        # Verificar que el saldo es suficiente
+        # Verificar si hay saldo suficiente
         if saldo_actual < monto:
             return jsonify({"error": "Saldo insuficiente"}), 400
 
         # Descontar el monto del saldo
         nuevo_saldo = saldo_actual - monto
-        cursor.execute("UPDATE Tarjetas SET saldo = ? WHERE numero_tarjeta = ?", nuevo_saldo, numero_tarjeta)
+        query_update = "UPDATE Tarjetas SET saldo = ? WHERE numero_tarjeta = ?"
+        cursor.execute(query_update, (nuevo_saldo, numero_tarjeta))
         conn.commit()
 
-        return jsonify({"mensaje": "Compra procesada exitosamente", "nuevo_saldo": nuevo_saldo}), 200
+        # Responder con el nuevo saldo
+        return jsonify({"mensaje": "Compra procesada exitosamente", "nuevo_saldo": str(nuevo_saldo)}), 200
+
     except Exception as e:
         conn.rollback()
-        return jsonify({"error": str(e)}), 500
+        print(f"Error al procesar la compra: {e}")
+        return jsonify({"error": f"Error al procesar la compra: {str(e)}"}), 500
+
     finally:
         cursor.close()
         conn.close()
@@ -1428,33 +1980,52 @@ def procesar_compra():
 
 @app.route('/api/registrar_tarjeta', methods=['POST'])
 def registrar_tarjeta():
+    # Obtener los datos del cuerpo de la solicitud
     data = request.json
     
     numero_tarjeta = data.get('numero_tarjeta')
-    fecha_vencimiento = data.get('fecha_vencimiento')
+    fecha_vencimiento = data.get('fecha_vencimiento')  # Formato esperado: "MM/YY"
     codigo_seguridad = data.get('codigo_seguridad')
-    saldo = data.get('saldo', 0.00)
+    saldo = data.get('saldo', 0.00)  # Saldo inicial opcional
     nombre_titular = data.get('nombre_titular')
 
-    # Validar que todos los datos requeridos estén presentes
+    # Validar que todos los campos requeridos estén presentes
     if not all([numero_tarjeta, fecha_vencimiento, codigo_seguridad, nombre_titular]):
         return jsonify({"error": "Todos los campos son requeridos"}), 400
 
-    conn = pyodbc.connect(conn_str)
-    cursor = conn.cursor()
+    try:
+        # Validar formato de fecha de vencimiento
+        fecha_vencimiento_dt = datetime.strptime(fecha_vencimiento, "%m/%y")
+    except ValueError:
+        return jsonify({"error": "Formato de fecha de vencimiento inválido. Use MM/YY"}), 400
+
+    # Convertir saldo a Decimal para evitar errores en cálculos posteriores
+    try:
+        saldo = Decimal(saldo)
+    except Exception:
+        return jsonify({"error": "El saldo debe ser un número válido"}), 400
+
+    # Conectar a la base de datos de Servicios Externos
+    conn = get_db_connection(CONN_STR_SERVICIOS_EXTERNO)
+    if not conn:
+        return jsonify({"error": "Error al conectar con la base de datos de servicios externos."}), 500
 
     try:
+        cursor = conn.cursor()
+
         # Insertar la nueva tarjeta en la base de datos
-        cursor.execute("""
+        query = """
             INSERT INTO Tarjetas (numero_tarjeta, fecha_vencimiento, codigo_seguridad, saldo, nombre_titular)
             VALUES (?, ?, ?, ?, ?)
-        """, numero_tarjeta, fecha_vencimiento, codigo_seguridad, saldo, nombre_titular)
+        """
+        cursor.execute(query, numero_tarjeta, fecha_vencimiento_dt, codigo_seguridad, saldo, nombre_titular)
         conn.commit()
-        
+
         return jsonify({"mensaje": "Tarjeta registrada exitosamente"}), 201
     except Exception as e:
         conn.rollback()
-        return jsonify({"error": str(e)}), 500
+        print(f"Error al registrar la tarjeta: {e}")
+        return jsonify({"error": f"Error al registrar la tarjeta: {str(e)}"}), 500
     finally:
         cursor.close()
         conn.close()
@@ -1465,83 +2036,112 @@ def registrar_tarjeta():
 
 
 
-# Ruta para obtener todos los videojuegos del proveedor externo
 @app.route('/api/videojuegos_proveedor', methods=['GET'])
 def obtener_videojuegos_proveedor():
-    conn = pyodbc.connect(conn_str)
-    cursor = conn.cursor()
-    
+    # Conectar a la base de datos de servicios externos
+    conn = get_db_connection(CONN_STR_SERVICIOS_EXTERNO)
+    if not conn:
+        return jsonify({"error": "Error al conectar con la base de datos de servicios externos."}), 500
+
     try:
-        cursor.execute("SELECT juego_id, nombre_juego, precio, plataforma, stock_disponible FROM VideojuegosProveedor")
+        cursor = conn.cursor()
+        
+        # Consultar los videojuegos del proveedor externo
+        query = """
+            SELECT juego_id, nombre_juego, precio, plataforma, stock_disponible 
+            FROM VideojuegosProveedor
+        """
+        cursor.execute(query)
         videojuegos = cursor.fetchall()
         
         # Convertir los resultados en un formato JSON
         videojuegos_list = [
             {
-                "juego_id": row.juego_id,
-                "nombre_juego": row.nombre_juego,
-                "precio": row.precio,
-                "plataforma": row.plataforma,
-                "stock_disponible": row.stock_disponible
+                "juego_id": row[0],
+                "nombre_juego": row[1],
+                "precio": float(row[2]),  # Convertir a float para JSON
+                "plataforma": row[3],
+                "stock_disponible": row[4]
             }
             for row in videojuegos
         ]
         
-        return jsonify(videojuegos_list)
+        return jsonify(videojuegos_list), 200
     except Exception as e:
-        return jsonify({"error": str(e)}), 500
+        print(f"Error al obtener videojuegos: {e}")
+        return jsonify({"error": f"Error al obtener videojuegos: {str(e)}"}), 500
     finally:
         cursor.close()
         conn.close()
 
-# Ruta para agregar un videojuego al proveedor externo
+
 @app.route('/api/videojuegos_proveedor', methods=['POST'])
 def agregar_videojuegos_proveedor():
+    # Obtener los datos de la solicitud
     data = request.json
 
-    # Verificar si data es una lista
+    # Validar que los datos recibidos sean una lista
     if not isinstance(data, list):
         return jsonify({"error": "Se esperaba una lista de videojuegos"}), 400
 
-    conn = pyodbc.connect(conn_str)
-    cursor = conn.cursor()
-    
+    # Conectar a la base de datos de Servicios Externos
+    conn = get_db_connection(CONN_STR_SERVICIOS_EXTERNO)
+    if not conn:
+        return jsonify({"error": "Error al conectar con la base de datos de servicios externos."}), 500
+
     try:
+        cursor = conn.cursor()
+
+        # Iterar sobre cada videojuego en la lista para insertarlo
         for videojuego in data:
             nombre_juego = videojuego.get('nombre_juego')
             precio = videojuego.get('precio')
             plataforma = videojuego.get('plataforma')
             stock_disponible = videojuego.get('stock_disponible', 0)
 
+            # Validar campos obligatorios
             if not nombre_juego or precio is None:
                 return jsonify({"error": "Cada videojuego debe tener un nombre y precio"}), 400
 
-            # Insertar cada videojuego en la base de datos
-            cursor.execute("""
+            # Insertar el videojuego en la base de datos
+            query = """
                 INSERT INTO VideojuegosProveedor (nombre_juego, precio, plataforma, stock_disponible)
                 VALUES (?, ?, ?, ?)
-            """, (nombre_juego, precio, plataforma, stock_disponible))
-        
-        conn.commit()  # Hacer commit después de todas las inserciones
+            """
+            cursor.execute(query, (nombre_juego, precio, plataforma, stock_disponible))
+
+        # Confirmar las inserciones
+        conn.commit()
         return jsonify({"mensaje": "Videojuegos agregados exitosamente"}), 201
     except Exception as e:
-        conn.rollback()
-        return jsonify({"error": str(e)}), 500
+        conn.rollback()  # Revertir cambios en caso de error
+        print(f"Error al agregar videojuegos: {e}")
+        return jsonify({"error": f"Error al agregar videojuegos: {str(e)}"}), 500
     finally:
         cursor.close()
         conn.close()
 
 
 
+
 # Ruta para obtener el estado de un paquete según el código
 @app.route('/api/rastreo_paquete/<codigo_paquete>', methods=['GET'])
 def obtener_estado_paquete(codigo_paquete):
-    conn = pyodbc.connect(conn_str)
-    cursor = conn.cursor()
-    
+    # Conectar a la base de datos de Servicios Externos
+    conn = get_db_connection(CONN_STR_SERVICIOS_EXTERNO)
+    if not conn:
+        return jsonify({"error": "Error al conectar con la base de datos de servicios externos."}), 500
+
     try:
+        cursor = conn.cursor()
+        
         # Consultar la información del paquete en la base de datos
-        cursor.execute("SELECT codigo_paquete, estado, ubicacion_actual, ultima_actualizacion FROM RastreoPaquetes WHERE codigo_paquete = ?", codigo_paquete)
+        query = """
+            SELECT codigo_paquete, estado, ubicacion_actual, ultima_actualizacion 
+            FROM RastreoPaquetes 
+            WHERE codigo_paquete = ?
+        """
+        cursor.execute(query, (codigo_paquete,))
         paquete = cursor.fetchone()
         
         if not paquete:
@@ -1549,49 +2149,61 @@ def obtener_estado_paquete(codigo_paquete):
         
         # Formatear la respuesta JSON
         paquete_info = {
-            "codigo_paquete": paquete.codigo_paquete,
-            "estado": paquete.estado,
-            "ubicacion_actual": paquete.ubicacion_actual,
-            "ultima_actualizacion": paquete.ultima_actualizacion.strftime('%Y-%m-%d %H:%M:%S')
+            "codigo_paquete": paquete[0],
+            "estado": paquete[1],
+            "ubicacion_actual": paquete[2],
+            "ultima_actualizacion": paquete[3].strftime('%Y-%m-%d %H:%M:%S') if paquete[3] else None
         }
         
-        return jsonify(paquete_info)
+        return jsonify(paquete_info), 200
     except Exception as e:
-        return jsonify({"error": str(e)}), 500
+        print(f"Error al obtener estado del paquete: {e}")
+        return jsonify({"error": f"Error interno: {str(e)}"}), 500
     finally:
         cursor.close()
         conn.close()
+
 
 
 
 @app.route('/api/actualizar_estado_paquete', methods=['POST'])
 def actualizar_estado_paquete():
+    # Obtener los datos del cuerpo de la solicitud
     data = request.json
     codigo_paquete = data.get('codigo_paquete')
     nuevo_estado = data.get('estado')
     nueva_ubicacion = data.get('ubicacion')
 
+    # Validar los datos requeridos
     if not codigo_paquete or not nuevo_estado:
         return jsonify({"error": "Código de paquete y nuevo estado son necesarios"}), 400
 
-    conn = pyodbc.connect(conn_str)
-    cursor = conn.cursor()
-    
+    # Conectar a la base de datos de Servicios Externos
+    conn = get_db_connection(CONN_STR_SERVICIOS_EXTERNO)
+    if not conn:
+        return jsonify({"error": "Error al conectar con la base de datos de servicios externos."}), 500
+
     try:
-        cursor.execute("""
+        cursor = conn.cursor()
+
+        # Actualizar el estado y la ubicación del paquete
+        query = """
             UPDATE RastreoPaquetes
             SET estado = ?, ubicacion_actual = ?, ultima_actualizacion = ?
             WHERE codigo_paquete = ?
-        """, (nuevo_estado, nueva_ubicacion, datetime.now(), codigo_paquete))
+        """
+        cursor.execute(query, (nuevo_estado, nueva_ubicacion, datetime.now(), codigo_paquete))
         conn.commit()
-        
+
         return jsonify({"mensaje": "Estado del paquete actualizado exitosamente"}), 200
     except Exception as e:
-        conn.rollback()
-        return jsonify({"error": str(e)}), 500
+        print(f"Error al actualizar estado del paquete: {e}")
+        conn.rollback()  # Revertir cambios en caso de error
+        return jsonify({"error": f"Error interno: {str(e)}"}), 500
     finally:
         cursor.close()
         conn.close()
+
 
 
 
@@ -1629,46 +2241,67 @@ def obtener_tipo_cambio():
 
 
 
-# Ruta para verificar la identificación en ambas bases de datos usando GET
 @app.route('/api/verificar_identificacion', methods=['GET'])
 def verificar_identificacion():
     identificacion = request.args.get('identificacion')
-    
+
     if not identificacion:
         return jsonify({"error": "Identificación es requerida"}), 400
 
+    conn_retronintendo = None
+    conn_servicios_externo = None
+
     try:
         # Conectar a la base de datos RetroNintendo y verificar en la tabla Usuarios
-        conn_retronintendo = pyodbc.connect(conn_str)
+        conn_retronintendo = get_db_connection(CONN_STR_PRINCIPAL)
+        if not conn_retronintendo:
+            return jsonify({"error": "Error al conectar a la base de datos RetroNintendo."}), 500
+
         cursor_retronintendo = conn_retronintendo.cursor()
-        cursor_retronintendo.execute("SELECT nombre_usuario FROM Usuarios WHERE identificacion = ?", identificacion)
+        query_retronintendo = "SELECT nombre_usuario FROM Usuarios WHERE identificacion = ?"
+        cursor_retronintendo.execute(query_retronintendo, (identificacion,))
         usuario = cursor_retronintendo.fetchone()
         cursor_retronintendo.close()
-        conn_retronintendo.close()
 
         # Si la identificación no existe en RetroNintendo, devolver que no existe
         if not usuario:
             return jsonify({"existe": False, "mensaje": "Identificación no encontrada en RetroNintendo"}), 404
 
-        # Conectar a la base de datos ServiciosExterno y verificar en la tabla PersonasTSE
-        conn_servicios_externo = pyodbc.connect(conn_str_servicios_externo)
+        # Conectar a la base de datos Servicios Externos y verificar en la tabla PersonasTSE
+        conn_servicios_externo = get_db_connection(CONN_STR_SERVICIOS_EXTERNO)
+        if not conn_servicios_externo:
+            return jsonify({"error": "Error al conectar a la base de datos de servicios externos."}), 500
+
         cursor_servicios_externo = conn_servicios_externo.cursor()
-        cursor_servicios_externo.execute("SELECT nombre FROM PersonasTSE WHERE identificacion = ?", identificacion)
+        query_servicios_externo = "SELECT nombre FROM PersonasTSE WHERE identificacion = ?"
+        cursor_servicios_externo.execute(query_servicios_externo, (identificacion,))
         persona_externa = cursor_servicios_externo.fetchone()
         cursor_servicios_externo.close()
-        conn_servicios_externo.close()
 
-        # Verificar si la identificación también existe en ServiciosExterno
+        # Verificar si la identificación también existe en Servicios Externos
         if persona_externa:
-            return jsonify({"existe": True, "nombre": usuario[0], "mensaje": "Identificación encontrada en ambas bases de datos"})
+            return jsonify({
+                "existe": True,
+                "nombre": usuario[0],
+                "mensaje": "Identificación encontrada en ambas bases de datos"
+            })
         else:
-            return jsonify({"existe": False, "mensaje": "Identificación no encontrada en ServiciosExterno"}), 404
+            return jsonify({
+                "existe": False,
+                "mensaje": "Identificación no encontrada en Servicios Externos"
+            }), 404
 
     except Exception as e:
-        return jsonify({"error": str(e)}), 500
+        print(f"Error al verificar la identificación: {e}")
+        return jsonify({"error": f"Error interno: {str(e)}"}), 500
+
+    finally:
+        # Cierre seguro de las conexiones
+        if conn_retronintendo:
+            conn_retronintendo.close()
+        if conn_servicios_externo:
+            conn_servicios_externo.close()
 
 
 if __name__ == "__main__":
-    # Cambia el puerto predeterminado según la lista de puertos
-    port = int(os.environ.get("PORT", 5000))  # 5000 para servidor.py
-    app.run(host="0.0.0.0", port=port)
+    app.run(host="0.0.0.0", port=5000, debug=True)
