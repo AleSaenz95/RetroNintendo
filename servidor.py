@@ -45,6 +45,7 @@ def get_db_connection():
     return None
 
 
+
 # Verificar conexión al iniciar
 @app.route('/test_connection')
 def test_connection():
@@ -92,7 +93,8 @@ EMAIL_PASS = "frqg gqyg pvqv vper"
 @app.route('/ver-resenas')
 def ver_resenas():
     # Obtener la conexión a la base de datos
-    conn = get_db_connection(CONN_STR_PRINCIPAL)  # Usar función para manejar conexiones
+    conn = get_db_connection()  # Usar la función de conexión
+  # Usar función para manejar conexiones
     if conn is None:
         return "Error al conectar con la base de datos.", 500
 
@@ -121,7 +123,8 @@ def enviar_mensaje():
         mensaje = request.form['mensaje']
 
         # Conectar a la base de datos
-        conn = get_db_connection(CONN_STR_PRINCIPAL)  # Usar la función de conexión
+        conn = get_db_connection()  # Usar la función de conexión
+  # Usar la función de conexión
         if conn is None:
             return "Error al conectar con la base de datos.", 500
 
@@ -147,7 +150,8 @@ def enviar_mensaje():
 @app.route('/ver-mensajes')
 def ver_mensajes():
     # Conectar a la base de datos
-    conn = get_db_connection(CONN_STR_PRINCIPAL)  # Usar la función de conexión
+    conn = get_db_connection()  # Usar la función de conexión
+  # Usar la función de conexión
     if conn is None:
         return "Error al conectar con la base de datos.", 500
 
@@ -171,7 +175,8 @@ def ver_mensajes():
 @app.route('/catalogo')
 def catalogo():
     # Conectar a la base de datos
-    conn = get_db_connection(CONN_STR_PRINCIPAL)  # Usar la función de conexión
+    conn = get_db_connection()  # Usar la función de conexión
+  # Usar la función de conexión
     if conn is None:
         return "Error al conectar con la base de datos.", 500
 
@@ -194,7 +199,8 @@ def catalogo():
 @app.route('/producto/<int:item_id>')
 def detalle_producto(item_id):
     # Conectar a la base de datos
-    conn = get_db_connection(CONN_STR_PRINCIPAL)  # Usar la función de conexión
+    conn = get_db_connection()  # Usar la función de conexión
+  # Usar la función de conexión
     if conn is None:
         return "Error al conectar con la base de datos.", 500
 
@@ -337,7 +343,8 @@ def comprar():
 @app.route('/gestor_ordenes')
 def gestor_ordenes():
     # Conectar a la base de datos
-    conn = get_db_connection(CONN_STR_PRINCIPAL)  # Usar la función de conexión
+    conn = get_db_connection()  # Usar la función de conexión
+  # Usar la función de conexión
     if conn is None:
         return "Error al conectar con la base de datos.", 500
 
@@ -379,7 +386,8 @@ def gestor_ordenes():
 @app.route('/ver_orden/<int:orden_id>')
 def ver_orden(orden_id):
     # Conectar a la base de datos
-    conn = get_db_connection(CONN_STR_PRINCIPAL)  # Usar la función de conexión
+    conn = get_db_connection()  # Usar la función de conexión
+  # Usar la función de conexión
     if conn is None:
         return "Error al conectar con la base de datos.", 500
 
@@ -411,7 +419,8 @@ def ver_orden(orden_id):
 @app.route('/procesar_orden/<int:orden_id>')
 def procesar_orden(orden_id):
     # Conectar a la base de datos
-    conn = get_db_connection(CONN_STR_PRINCIPAL)  # Usar la función de conexión
+    conn = get_db_connection()  # Usar la función de conexión
+  # Usar la función de conexión
     if conn is None:
         return "Error al conectar con la base de datos.", 500
 
@@ -436,7 +445,8 @@ def procesar_orden(orden_id):
 @app.route('/reporte_ventas')
 def reporte_ventas():
     # Conectar a la base de datos
-    conn = get_db_connection(CONN_STR_PRINCIPAL)  # Usar la función de conexión
+    conn = get_db_connection()  # Usar la función de conexión
+  # Usar la función de conexión
     if conn is None:
         return "Error al conectar con la base de datos.", 500
 
@@ -476,7 +486,8 @@ def reporte_ventas():
 @app.route('/pedidos_express')
 def pedidos_express():
     # Conectar a la base de datos
-    conn = get_db_connection(CONN_STR_PRINCIPAL)  # Usar la función de conexión
+    conn = get_db_connection()  # Usar la función de conexión
+  # Usar la función de conexión
     if conn is None:
         return "Error al conectar con la base de datos.", 500
 
@@ -514,7 +525,8 @@ def confirmar_completado():
     quien_recibe = request.form['quien_recibe']
 
     # Conectar a la base de datos
-    conn = get_db_connection(CONN_STR_PRINCIPAL)  # Usar la función de conexión
+    conn = get_db_connection()  # Usar la función de conexión
+  # Usar la función de conexión
     if conn is None:
         return "Error al conectar con la base de datos.", 500
 
@@ -587,7 +599,8 @@ def login():
             password = request.form['password']
 
         # Conectar a la base de datos
-        conn = get_db_connection(CONN_STR_PRINCIPAL)  # Usar la función de conexión
+        conn = get_db_connection()  # Usar la función de conexión
+  # Usar la función de conexión
         if conn is None:
             return "Error al conectar con la base de datos.", 500
 
@@ -1730,8 +1743,8 @@ def solicitud_cotizacion():
 @app.route('/api/comparar_precios', methods=['GET'])
 def comparar_precios():
     # Conectar a la base de datos principal y de servicios externos
-    conn_inventario = get_db_connection(CONN_STR_PRINCIPAL)
-    conn_competencia = get_db_connection(CONN_STR_PRINCIPAL)
+    conn_inventario = conn = get_db_connection()  
+    conn_competencia = conn = get_db_connection()  
 
     if not conn_inventario or not conn_competencia:
         return jsonify({"error": "Error al conectar a una o ambas bases de datos."}), 500
@@ -2249,7 +2262,7 @@ def verificar_identificacion():
 
     try:
         # Conectar a la base de datos RetroNintendo y verificar en la tabla Usuarios
-        conn_retronintendo = get_db_connection(CONN_STR_PRINCIPAL)
+        conn_retronintendo = conn = get_db_connection()  
         if not conn_retronintendo:
             return jsonify({"error": "Error al conectar a la base de datos RetroNintendo."}), 500
 
@@ -2264,7 +2277,7 @@ def verificar_identificacion():
             return jsonify({"existe": False, "mensaje": "Identificación no encontrada en RetroNintendo"}), 404
 
         # Conectar a la base de datos Servicios Externos y verificar en la tabla PersonasTSE
-        conn_servicios_externo = get_db_connection(CONN_STR_PRINCIPAL)
+        conn_servicios_externo = conn = get_db_connection()  
         if not conn_servicios_externo:
             return jsonify({"error": "Error al conectar a la base de datos de servicios externos."}), 500
 
