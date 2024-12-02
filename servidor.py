@@ -9,7 +9,8 @@ import pyodbc
 from datetime import date
 import requests 
 import os
-
+from decimal import Decimal
+from zeep import Client
 
 
 app = Flask(__name__, template_folder='templates')
@@ -28,6 +29,25 @@ conn_str = (
     "UID=tiusr3pl66;"
     "PWD=LpsLt5Awx&nb8$b2;"
 )
+
+def get_db_connection():
+    try:
+        conn = pyodbc.connect(conn_str)
+        print("Conexión exitosa a la base de datos.")
+        return conn
+    except pyodbc.Error as e:
+        print(f"Error al conectar a la base de datos: {e}")
+        return None
+
+conn_str_servicios_externo = (
+    "DRIVER={SQL Server};"
+    "SERVER=tiusr3pl.cuc-carrera-ti.ac.cr;"
+    "DATABASE=tiusr3pl_RetroNintendo_SE;"
+    "UID=tiusr3pl66;"
+    "PWD=LpsLt5Awx&nb8$b2;"
+)
+conn_servicios_externo = pyodbc.connect(conn_str_servicios_externo)
+
 
 try:
     conn = pyodbc.connect(conn_str)
@@ -63,22 +83,6 @@ EMAIL_USER = "retronintendo1986@gmail.com"
 EMAIL_PASS = "frqg gqyg pvqv vper"
 
 # Ruta para agregar una nueva reseña
-@app.route('/agregar-resena', methods=['GET', 'POST'])
-def agregar_resena():
-    if request.method == 'POST':
-        nombre_juego = request.form['nombre_juego']
-        resena = request.form['resena']
-
-        # Guardar la reseña en la base de datos
-        cursor = conn.cursor()
-        query = "INSERT INTO Resenas (nombre_juego, resena) VALUES (?, ?)"
-        cursor.execute(query, (nombre_juego, resena))
-        conn.commit()
-           # Redirige a la página para ver todas las reseñas después de guardar
-        return redirect('/ver-resenas')
-    
-    # Renderiza el formulario para agregar una reseña
-    return render_template('resena.html')
 
 # Ruta para ver las reseñas guardadas
 @app.route('/ver-resenas')
@@ -203,36 +207,6 @@ def comprar():
     producto_precio = producto[1]
 
     return render_template('comprar.html', producto_nombre=producto_nombre, producto_precio=producto_precio)
-
-# Ruta para procesar el pago (función de soporte)
-@app.route('/procesar_compra', methods=['POST'])
-def procesar_compra():
-    data = request.form
-    numero_tarjeta = data.get('numero_tarjeta')
-    fecha_vencimiento = data.get('fecha_vencimiento')
-    codigo_seguridad = data.get('codigo_seguridad')
-    monto = data.get('monto')
-    descripcion_comercio = data.get('descripcion_comercio')
-
-    # Información de pago para el servidor de pagos
-    payload = {
-        "numero_tarjeta": numero_tarjeta,
-        "fecha_vencimiento": fecha_vencimiento,
-        "codigo_seguridad": codigo_seguridad,
-        "monto": float(monto),
-        "descripcion_comercio": descripcion_comercio
-    }
-
-    # Enviar solicitud al servidor de pagos
-    try:
-        response = requests.post("http://127.0.0.1:5001/api/procesar_compra", json=payload)
-        response_data = response.json()
-        if response.status_code == 200:
-            return jsonify({"mensaje": "Compra completada y pago procesado exitosamente"})
-        else:
-            return jsonify({"error": response_data.get("error", "Error al procesar el pago")}), 400
-    except Exception as e:
-        return jsonify({"error": f"Error al conectar con el servidor de pagos: {str(e)}"}), 500
 
 
 # Ruta para el gestor de órdenes
@@ -367,104 +341,6 @@ def acerca_de():
 
 #################### login
 # Ruta para el registro
-WEB_SERVICE_URL = 'http://localhost:4000/registro'
-
-
-@app.route('/registro', methods=['GET', 'POST'])
-def registro():
-    if request.method == 'POST':
-        # Recibe los datos del formulario enviado por el usuario
-        data = {
-            "nombre_usuario": request.form.get('nombre_usuario'),
-            "correo": request.form.get('correo'),
-            "password": request.form.get('password'),
-            "pais": request.form.get('pais'),
-            "provincia": request.form.get('provincia'),
-            "canton": request.form.get('canton'),
-            "distrito": request.form.get('distrito'),
-            "identificacion": request.form.get('identificacion'),
-            "respuesta1": request.form.get('respuesta1'),
-            "respuesta2": request.form.get('respuesta2'),
-            "respuesta3": request.form.get('respuesta3')
-        }
-
-        # Validar campos obligatorios
-        campos_obligatorios = ['nombre_usuario', 'correo', 'password', 'pais', 'provincia', 'canton', 'distrito', 'identificacion', 'respuesta1', 'respuesta2', 'respuesta3']
-        if not all(field in data for field in campos_obligatorios):
-            return jsonify({"message": "Todos los campos son obligatorios."}), 400
-
-        # Hacer una solicitud POST al web service externo
-        try:
-            response = requests.post(WEB_SERVICE_URL, json=data)
-            response_data = response.json()
-
-            # Si el web service responde con éxito, redirige o muestra mensaje de éxito
-            if response.status_code == 201:
-                return render_template_string("""
-            <!DOCTYPE html>
-            <html lang="es">
-            <head>
-                <meta charset="UTF-8">
-                <meta name="viewport" content="width=device-width, initial-scale=1.0">
-                <title>Registro Exitoso</title>
-                <style>
-                    body {
-                        background-color: #111;
-                        color: #fff;
-                        font-family: Arial, sans-serif;
-                        display: flex;
-                        justify-content: center;
-                        align-items: center;
-                        height: 100vh;
-                        margin: 0;
-                    }
-                    .container {
-                        text-align: center;
-                        background-color: #222;
-                        padding: 30px;
-                        border-radius: 10px;
-                        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
-                    }
-                    h1 {
-                        color: #ffcc00;
-                    }
-                    .message {
-                        font-size: 1.2em;
-                        margin: 20px 0;
-                    }
-                    .btn {
-                        display: inline-block;
-                        padding: 10px 20px;
-                        background-color: #e50914;
-                        color: #fff;
-                        text-decoration: none;
-                        border-radius: 5px;
-                        transition: background-color 0.3s ease;
-                    }
-                    .btn:hover {
-                        background-color: #b20710;
-                    }
-                </style>
-            </head>
-            <body>
-                <div class="container">
-                    <h1>¡Registro Exitoso!</h1>
-                    <p class="message">Usuario registrado exitosamente.</p>
-                    <a href="/login" class="btn">Ir al Login</a>
-                </div>
-            </body>
-            </html>
-            """)
-            else:
-                return jsonify({"message": "Error en el registro en el web service.", "details": response_data}), response.status_code
-
-        except requests.RequestException as e:
-            print(f"Error al llamar al web service: {e}")
-            return jsonify({"message": "No se pudo conectar al web service."}), 500
-
-    # Si es una solicitud GET, renderiza el formulario de registro
-    return render_template('registro.html')
-
 
 
 # Ruta para iniciar sesión
@@ -1102,17 +978,6 @@ def actualizar_estado(codigo_paquete):
 
 
 
-# Proveedor competencia
-@app.route('/comparar_precios', methods=['GET'])
-def comparar_precios():
-    try:
-        response = requests.get("http://127.0.0.1:5011/api/comparar_precios", timeout=5)
-        response.raise_for_status()
-        comparacion_precios = response.json()
-    except requests.exceptions.RequestException as e:
-        return jsonify({"error": f"Error al conectar con la API: {e}"}), 500
-
-    return render_template('comparar_precios.html', comparacion_precios=comparacion_precios)
 
 
 
@@ -1131,6 +996,663 @@ def tipo_cambio():
     print("Tipo de cambio recibido:", tipo_cambio_venta)
 
     return render_template('tipo_cambio.html', tipo_cambio=tipo_cambio_venta)
+
+
+###########Nuevas conexiones
+
+
+# Ruta para registrar usuarios
+@app.route('/registro', methods=['POST'])
+def registro():
+    data = request.get_json()
+    print("Datos recibidos:", data)
+
+    # Validar campos obligatorios (incluyendo identificacion)
+    campos_obligatorios = ['nombre_usuario', 'correo', 'password', 'pais', 'provincia', 'canton', 'distrito', 'identificacion', 'respuesta1', 'respuesta2', 'respuesta3']
+    if not all(data.get(field) for field in campos_obligatorios):
+        return jsonify({"message": "Todos los campos son obligatorios."}), 400
+
+    # Asignar valores recibidos, incluyendo identificacion
+    nombre_usuario = data['nombre_usuario']
+    correo = data['correo']
+    password = data['password']
+    pais = data['pais']
+    provincia = data['provincia']
+    canton = data['canton']
+    distrito = data['distrito']
+    identificacion = data['identificacion']
+    respuesta1 = data['respuesta1']
+    respuesta2 = data['respuesta2']
+    respuesta3 = data['respuesta3']
+
+    # Generar un hash de la contraseña
+    password_hash = generate_password_hash(password)
+
+    # Conectar a la base de datos y buscar ubicacion_id
+    conn = get_db_connection()
+    if conn:
+        try:
+            cursor = conn.cursor()
+
+            # Buscar ubicacion_id correspondiente
+            select_ubicacion_query = """
+                SELECT ubicacion_id FROM Ubicaciones 
+                WHERE pais = ? AND provincia = ? AND canton = ? AND distrito = ?
+            """
+            cursor.execute(select_ubicacion_query, (pais, provincia, canton, distrito))
+            ubicacion = cursor.fetchone()
+
+            if not ubicacion:
+                return jsonify({"message": "No se encontró la ubicación especificada."}), 400
+
+            ubicacion_id = ubicacion[0]
+
+            # Insertar el nuevo usuario en la tabla Usuarios usando ubicacion_id y identificacion
+            insert_usuario_query = """
+                INSERT INTO Usuarios (nombre_usuario, correo, password_hash, ubicacion_id, identificacion, fecha_registro, respuesta1, respuesta2, respuesta3)
+                VALUES (?, ?, ?, ?, ?, GETDATE(), ?, ?, ?)
+            """
+            cursor.execute(insert_usuario_query, (nombre_usuario, correo, password_hash, ubicacion_id, identificacion, respuesta1, respuesta2, respuesta3))
+            conn.commit()
+
+            return jsonify({"message": "Usuario registrado exitosamente."}), 201
+        except pyodbc.Error as e:
+            print(f"Error al registrar usuario: {e}")
+            return jsonify({"message": f"Ocurrió un error durante el registro: {e}"}), 500
+        finally:
+            conn.close()
+    else:
+        return jsonify({"message": "No se pudo conectar a la base de datos."}), 500
+
+
+
+
+# Ruta para agregar una nueva reseña
+@app.route('/agregar-resena', methods=['POST'])
+def agregar_resena():
+    print("Recibiendo solicitud de reseña...")
+    
+    # Verificar si los datos vienen en JSON
+    if request.is_json:
+        data = request.get_json()
+        print("Datos recibidos (JSON):", data)
+    else:
+        return jsonify({"message": "Formato no válido. Se espera JSON."}), 400
+    
+    # Obtener campos del JSON
+    nombre_juego = data.get('nombre_juego')
+    resena = data.get('resena')
+    
+    # Validación de campos obligatorios
+    if not nombre_juego or not resena:
+        print("Faltan campos obligatorios:", data)  # Agregar depuración
+        return jsonify({"message": "Faltan campos obligatorios"}), 400
+
+    # Guardar reseña en la base de datos
+    conn = get_db_connection()
+    if conn:
+        try:
+            cursor = conn.cursor()
+            query = "INSERT INTO Resenas (nombre_juego, resena, fecha) VALUES (?, ?, ?)"
+            cursor.execute(query, (nombre_juego, resena, datetime.now()))
+            conn.commit()
+            print("Reseña guardada correctamente.")
+            return jsonify({"message": "Reseña guardada exitosamente."}), 201
+        except pyodbc.Error as e:
+            print(f"Error al guardar reseña: {e}")
+            return jsonify({"message": f"Error al guardar la reseña: {e}"}), 500
+        finally:
+            conn.close()
+    else:
+        return jsonify({"message": "No se pudo conectar a la base de datos."}), 500
+
+
+# Ruta para ver reseñas en formato JSON
+@app.route('/api/ver-resenas', methods=['GET'])
+def ver_resenas_json():
+    conn = get_db_connection()
+    if conn:
+        try:
+            cursor = conn.cursor()
+            query = "SELECT nombre_juego, resena, fecha FROM Resenas"
+            cursor.execute(query)
+            resenas = cursor.fetchall()
+            
+            # Convertir las reseñas a una lista de diccionarios para JSON
+            resenas_json = [
+                {"nombre_juego": resena[0], "resena": resena[1], "fecha": resena[2].strftime('%Y-%m-%d %H:%M')}
+                for resena in resenas
+            ]
+            return jsonify(resenas=resenas_json), 200
+        except pyodbc.Error as e:
+            print(f"Error al obtener reseñas: {e}")
+            return jsonify({"message": f"Ocurrió un error al obtener las reseñas: {e}"}), 500
+        finally:
+            conn.close()
+    else:
+        return jsonify({"message": "No se pudo conectar a la base de datos."}), 500
+
+
+
+#cotizacion
+@app.route('/api/solicitud_cotizacion', methods=['POST'])
+def solicitud_cotizacion():
+    data = request.json
+    
+    # Validar datos recibidos
+    if not data or 'usuario_id' not in data or 'productos' not in data:
+        return jsonify({'error': 'Datos incompletos'}), 400
+    
+    usuario_id = data['usuario_id']
+    productos = data['productos']  # Lista de diccionarios con item_id y cantidad
+    direccion_entrega = data.get('direccion_entrega')
+    email = data.get('email')
+
+    total_estimado = 0
+    detalles_cotizacion = []
+
+    # Conectar a la base de datos
+    conn = None
+    cursor = None
+
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+
+        # Calcular el total estimado y preparar los detalles de la cotización
+        for producto in productos:
+            item_id = producto['item_id']
+            cantidad = producto['cantidad']
+            
+            # Consultar el precio del producto en la base de datos
+            cursor.execute("SELECT precio FROM Inventario WHERE item_id = ?", item_id)
+            result = cursor.fetchone()
+            
+            if not result:
+                return jsonify({'error': f'Producto con ID {item_id} no encontrado'}), 404
+            
+            precio_unitario = result[0]
+            subtotal = precio_unitario * cantidad
+            total_estimado += subtotal
+            
+            # Agregar detalle al listado para inserción posterior
+            detalles_cotizacion.append({
+                'item_id': item_id,
+                'cantidad': cantidad,
+                'precio_unitario': precio_unitario
+            })
+
+        # Insertar la solicitud de cotización en la base de datos
+        cursor.execute("""
+            INSERT INTO SolicitudesCotizacion (usuario_id, total_estimado, direccion_entrega, email)
+            VALUES (?, ?, ?, ?)
+        """, usuario_id, total_estimado, direccion_entrega, email)
+        conn.commit()
+
+        # Obtener el ID de la cotización recién insertada
+        cursor.execute("SELECT @@IDENTITY AS cotizacion_id;")
+        cotizacion_id = cursor.fetchone()[0]
+
+        # Insertar los detalles de la cotización
+        for detalle in detalles_cotizacion:
+            cursor.execute("""
+                INSERT INTO DetalleCotizacion (cotizacion_id, item_id, cantidad, precio_unitario)
+                VALUES (?, ?, ?, ?)
+            """, cotizacion_id, detalle['item_id'], detalle['cantidad'], detalle['precio_unitario'])
+        conn.commit()
+
+    except Exception as e:
+        if conn:
+            conn.rollback()  # Hacer rollback en caso de error
+        return jsonify({'error': str(e)}), 500
+
+    finally:
+        # Cerrar cursor y conexión
+        if cursor:
+            cursor.close()
+        if conn:
+            conn.close()
+
+    # Responder con un mensaje de confirmación
+    return jsonify({
+        'mensaje': 'Solicitud de cotización recibida',
+        'cotizacion_id': cotizacion_id,
+        'total_estimado': total_estimado
+    }), 200
+
+
+
+@app.route('/api/comparar_precios', methods=['GET'])
+def comparar_precios():
+    try:
+        cursor_competencia = conn_servicios_externo.cursor()
+        cursor_inventario = conn_str.cursor()
+
+        cursor_competencia.execute("SELECT item_id, nombre_articulo, precio FROM ProveedorCompetencia")
+        competencia_items = cursor_competencia.fetchall()
+
+        comparacion_precios = []
+
+        for item in competencia_items:
+            print(f"Procesando artículo: {item.nombre_articulo}")  # Log
+            item_id = item.item_id
+            nombre_articulo = item.nombre_articulo
+            precio_competencia = item.precio
+
+            cursor_inventario.execute("SELECT precio FROM Inventario WHERE nombre_articulo = ?", nombre_articulo)
+            inventario_item = cursor_inventario.fetchone()
+
+            if inventario_item:
+                precio_retronintendo = inventario_item.precio
+            else:
+                precio_retronintendo = None
+
+            comparacion_precios.append({
+                "nombre_articulo": nombre_articulo,
+                "precio_competencia": precio_competencia,
+                "precio_retronintendo": precio_retronintendo
+            })
+
+        cursor_competencia.close()
+        cursor_inventario.close()
+
+        return jsonify(comparacion_precios)
+    except Exception as e:
+        print(f"Error: {e}")  # Log
+        return jsonify({"error": f"Error interno: {str(e)}"}), 500
+
+
+
+
+
+# Endpoint para procesar pagos con tarjeta
+@app.route('/api/pago_tarjeta', methods=['POST'])
+def pago_tarjeta():
+    data = request.json
+    
+    # Validar que los datos necesarios estén presentes
+    required_fields = ["numero_tarjeta", "fecha_vencimiento", "codigo_seguridad", "monto", "descripcion_comercio"]
+    if not all(field in data for field in required_fields):
+        return jsonify({"error": "Datos incompletos"}), 400
+    
+    numero_tarjeta = data['numero_tarjeta']
+    fecha_vencimiento = data['fecha_vencimiento']
+    codigo_seguridad = data['codigo_seguridad']
+    monto = data['monto']
+    descripcion_comercio = data['descripcion_comercio']
+    fecha_transaccion = datetime.now()
+
+    # Conectar a la base de datos
+    conn = pyodbc.connect(conn_str)
+    cursor = conn.cursor()
+
+    # Insertar el registro de pago en la base de datos
+    try:
+        cursor.execute("""
+            INSERT INTO PagosTarjeta (numero_tarjeta, fecha_vencimiento, codigo_seguridad, monto, descripcion_comercio, fecha_transaccion)
+            VALUES (?, ?, ?, ?, ?, ?)
+        """, numero_tarjeta, fecha_vencimiento, codigo_seguridad, monto, descripcion_comercio, fecha_transaccion)
+        conn.commit()
+    except Exception as e:
+        conn.rollback()
+        return jsonify({"error": f"Error al procesar el pago: {str(e)}"}), 500
+    finally:
+        cursor.close()
+        conn.close()
+
+    # Responder con confirmación de pago
+    return jsonify({"mensaje": "Pago procesado exitosamente"}), 200
+
+
+# Ruta para agregar saldo a la tarjeta
+@app.route('/api/agregar_saldo', methods=['POST'])
+def agregar_saldo():
+    data = request.json
+    numero_tarjeta = data.get('numero_tarjeta')
+    monto = data.get('monto')
+
+    if not numero_tarjeta or not monto:
+        return jsonify({"error": "Número de tarjeta y monto son requeridos"}), 400
+
+    conn = pyodbc.connect(conn_str)
+    cursor = conn.cursor()
+
+    try:
+        cursor.execute("SELECT saldo FROM Tarjetas WHERE numero_tarjeta = ?", numero_tarjeta)
+        tarjeta = cursor.fetchone()
+
+        if not tarjeta:
+            return jsonify({"error": "Tarjeta no encontrada"}), 404
+
+        nuevo_saldo = tarjeta[0] + monto
+        cursor.execute("UPDATE Tarjetas SET saldo = ? WHERE numero_tarjeta = ?", nuevo_saldo, numero_tarjeta)
+        conn.commit()
+
+        return jsonify({"mensaje": f"Saldo agregado exitosamente. Nuevo saldo: {nuevo_saldo}"}), 200
+    except Exception as e:
+        conn.rollback()
+        return jsonify({"error": str(e)}), 500
+    finally:
+        cursor.close()
+        conn.close()
+
+# Ruta para procesar la compra y descontar saldo
+
+from datetime import datetime
+
+@app.route('/api/procesar_compra', methods=['POST'])
+def procesar_compra():
+    data = request.json
+    numero_tarjeta = data.get('numero_tarjeta')
+    fecha_vencimiento = data.get('fecha_vencimiento')  # En formato MM/YY (e.g., "12/25")
+    codigo_seguridad = data.get('codigo_seguridad')
+    monto = data.get('monto')
+
+    if not all([numero_tarjeta, fecha_vencimiento, codigo_seguridad, monto]):
+        return jsonify({"error": "Todos los campos son requeridos"}), 400
+
+    # Convertir monto a Decimal para operaciones con saldo_actual
+    monto = Decimal(monto)
+
+    # Convertir la fecha de vencimiento ingresada a un objeto datetime en formato MM/YY
+    try:
+        fecha_vencimiento_dt = datetime.strptime(fecha_vencimiento, "%m/%y")
+    except ValueError:
+        return jsonify({"error": "Formato de fecha de vencimiento inválido. Use MM/YY"}), 400
+
+    conn = pyodbc.connect(conn_str)
+    cursor = conn.cursor()
+
+    try:
+        # Verificar que la tarjeta existe y el código de seguridad coincide
+        cursor.execute("""
+            SELECT saldo, codigo_seguridad, fecha_vencimiento
+            FROM Tarjetas 
+            WHERE numero_tarjeta = ?
+        """, numero_tarjeta)
+        
+        tarjeta = cursor.fetchone()
+        
+        if not tarjeta:
+            return jsonify({"error": "Tarjeta no encontrada"}), 404
+
+        saldo_actual, codigo_seguridad_db, fecha_vencimiento_db = tarjeta
+
+        # Validar código de seguridad
+        if codigo_seguridad != codigo_seguridad_db:
+            return jsonify({"error": "Código de seguridad incorrecto"}), 403
+
+        # Convertir fecha_vencimiento_db a cadena en formato MM/YY
+        if isinstance(fecha_vencimiento_db, datetime):
+            fecha_vencimiento_db_str = fecha_vencimiento_db.strftime("%m/%y")
+        else:
+            fecha_vencimiento_db_str = datetime.strptime(fecha_vencimiento_db, "%Y-%m-%d").strftime("%m/%y")
+
+        # Comparar solo el mes y el año en formato MM/YY
+        if fecha_vencimiento != fecha_vencimiento_db_str:
+            return jsonify({"error": "Fecha de vencimiento incorrecta"}), 403
+
+        # Verificar que el saldo es suficiente
+        if saldo_actual < monto:
+            return jsonify({"error": "Saldo insuficiente"}), 400
+
+        # Descontar el monto del saldo
+        nuevo_saldo = saldo_actual - monto
+        cursor.execute("UPDATE Tarjetas SET saldo = ? WHERE numero_tarjeta = ?", nuevo_saldo, numero_tarjeta)
+        conn.commit()
+
+        return jsonify({"mensaje": "Compra procesada exitosamente", "nuevo_saldo": nuevo_saldo}), 200
+    except Exception as e:
+        conn.rollback()
+        return jsonify({"error": str(e)}), 500
+    finally:
+        cursor.close()
+        conn.close()
+
+
+
+
+
+@app.route('/api/registrar_tarjeta', methods=['POST'])
+def registrar_tarjeta():
+    data = request.json
+    
+    numero_tarjeta = data.get('numero_tarjeta')
+    fecha_vencimiento = data.get('fecha_vencimiento')
+    codigo_seguridad = data.get('codigo_seguridad')
+    saldo = data.get('saldo', 0.00)
+    nombre_titular = data.get('nombre_titular')
+
+    # Validar que todos los datos requeridos estén presentes
+    if not all([numero_tarjeta, fecha_vencimiento, codigo_seguridad, nombre_titular]):
+        return jsonify({"error": "Todos los campos son requeridos"}), 400
+
+    conn = pyodbc.connect(conn_str)
+    cursor = conn.cursor()
+
+    try:
+        # Insertar la nueva tarjeta en la base de datos
+        cursor.execute("""
+            INSERT INTO Tarjetas (numero_tarjeta, fecha_vencimiento, codigo_seguridad, saldo, nombre_titular)
+            VALUES (?, ?, ?, ?, ?)
+        """, numero_tarjeta, fecha_vencimiento, codigo_seguridad, saldo, nombre_titular)
+        conn.commit()
+        
+        return jsonify({"mensaje": "Tarjeta registrada exitosamente"}), 201
+    except Exception as e:
+        conn.rollback()
+        return jsonify({"error": str(e)}), 500
+    finally:
+        cursor.close()
+        conn.close()
+
+
+
+
+
+
+
+# Ruta para obtener todos los videojuegos del proveedor externo
+@app.route('/api/videojuegos_proveedor', methods=['GET'])
+def obtener_videojuegos_proveedor():
+    conn = pyodbc.connect(conn_str)
+    cursor = conn.cursor()
+    
+    try:
+        cursor.execute("SELECT juego_id, nombre_juego, precio, plataforma, stock_disponible FROM VideojuegosProveedor")
+        videojuegos = cursor.fetchall()
+        
+        # Convertir los resultados en un formato JSON
+        videojuegos_list = [
+            {
+                "juego_id": row.juego_id,
+                "nombre_juego": row.nombre_juego,
+                "precio": row.precio,
+                "plataforma": row.plataforma,
+                "stock_disponible": row.stock_disponible
+            }
+            for row in videojuegos
+        ]
+        
+        return jsonify(videojuegos_list)
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+    finally:
+        cursor.close()
+        conn.close()
+
+# Ruta para agregar un videojuego al proveedor externo
+@app.route('/api/videojuegos_proveedor', methods=['POST'])
+def agregar_videojuegos_proveedor():
+    data = request.json
+
+    # Verificar si data es una lista
+    if not isinstance(data, list):
+        return jsonify({"error": "Se esperaba una lista de videojuegos"}), 400
+
+    conn = pyodbc.connect(conn_str)
+    cursor = conn.cursor()
+    
+    try:
+        for videojuego in data:
+            nombre_juego = videojuego.get('nombre_juego')
+            precio = videojuego.get('precio')
+            plataforma = videojuego.get('plataforma')
+            stock_disponible = videojuego.get('stock_disponible', 0)
+
+            if not nombre_juego or precio is None:
+                return jsonify({"error": "Cada videojuego debe tener un nombre y precio"}), 400
+
+            # Insertar cada videojuego en la base de datos
+            cursor.execute("""
+                INSERT INTO VideojuegosProveedor (nombre_juego, precio, plataforma, stock_disponible)
+                VALUES (?, ?, ?, ?)
+            """, (nombre_juego, precio, plataforma, stock_disponible))
+        
+        conn.commit()  # Hacer commit después de todas las inserciones
+        return jsonify({"mensaje": "Videojuegos agregados exitosamente"}), 201
+    except Exception as e:
+        conn.rollback()
+        return jsonify({"error": str(e)}), 500
+    finally:
+        cursor.close()
+        conn.close()
+
+
+
+# Ruta para obtener el estado de un paquete según el código
+@app.route('/api/rastreo_paquete/<codigo_paquete>', methods=['GET'])
+def obtener_estado_paquete(codigo_paquete):
+    conn = pyodbc.connect(conn_str)
+    cursor = conn.cursor()
+    
+    try:
+        # Consultar la información del paquete en la base de datos
+        cursor.execute("SELECT codigo_paquete, estado, ubicacion_actual, ultima_actualizacion FROM RastreoPaquetes WHERE codigo_paquete = ?", codigo_paquete)
+        paquete = cursor.fetchone()
+        
+        if not paquete:
+            return jsonify({"error": "Paquete no encontrado"}), 404
+        
+        # Formatear la respuesta JSON
+        paquete_info = {
+            "codigo_paquete": paquete.codigo_paquete,
+            "estado": paquete.estado,
+            "ubicacion_actual": paquete.ubicacion_actual,
+            "ultima_actualizacion": paquete.ultima_actualizacion.strftime('%Y-%m-%d %H:%M:%S')
+        }
+        
+        return jsonify(paquete_info)
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+    finally:
+        cursor.close()
+        conn.close()
+
+
+
+@app.route('/api/actualizar_estado_paquete', methods=['POST'])
+def actualizar_estado_paquete():
+    data = request.json
+    codigo_paquete = data.get('codigo_paquete')
+    nuevo_estado = data.get('estado')
+    nueva_ubicacion = data.get('ubicacion')
+
+    if not codigo_paquete or not nuevo_estado:
+        return jsonify({"error": "Código de paquete y nuevo estado son necesarios"}), 400
+
+    conn = pyodbc.connect(conn_str)
+    cursor = conn.cursor()
+    
+    try:
+        cursor.execute("""
+            UPDATE RastreoPaquetes
+            SET estado = ?, ubicacion_actual = ?, ultima_actualizacion = ?
+            WHERE codigo_paquete = ?
+        """, (nuevo_estado, nueva_ubicacion, datetime.now(), codigo_paquete))
+        conn.commit()
+        
+        return jsonify({"mensaje": "Estado del paquete actualizado exitosamente"}), 200
+    except Exception as e:
+        conn.rollback()
+        return jsonify({"error": str(e)}), 500
+    finally:
+        cursor.close()
+        conn.close()
+
+
+
+
+
+# Ruta para obtener el tipo de cambio
+@app.route('/api/tipo_cambio', methods=['GET'])
+def obtener_tipo_cambio():
+    wsdl_url = 'https://gee.bccr.fi.cr/Indicadores/Suscripciones/WS/wsindicadoreseconomicos.asmx?WSDL'
+    client = Client(wsdl=wsdl_url)
+    
+    params = {
+        'Indicador': '318',
+        'FechaInicio': datetime.now().strftime('%d/%m/%Y'),
+        'FechaFinal': datetime.now().strftime('%d/%m/%Y'),
+        'Nombre': 'saenz2595@gmail.com',
+        'SubNiveles': 'N',
+        'CorreoElectronico': 'saenz2595@gmail.com',
+        'Token': '59JGE1L5EZ'
+    }
+    
+    try:
+        # Llamar al servicio SOAP para obtener el tipo de cambio
+        response = client.service.ObtenerIndicadoresEconomicos(**params)
+        
+        # Extraer el tipo de cambio de acuerdo con la estructura obtenida
+        tipo_cambio_venta = response['_value_1']['_value_1'][0]['INGC011_CAT_INDICADORECONOMIC']['NUM_VALOR']
+        
+        # Devolver el tipo de cambio en formato JSON
+        return jsonify({"tipo_cambio_venta": float(tipo_cambio_venta)})
+    
+    except Exception as e:
+        return jsonify({"error": f"Error al obtener el tipo de cambio: {str(e)}"}), 500
+
+
+
+
+# Ruta para verificar la identificación en ambas bases de datos usando GET
+@app.route('/api/verificar_identificacion', methods=['GET'])
+def verificar_identificacion():
+    identificacion = request.args.get('identificacion')
+    
+    if not identificacion:
+        return jsonify({"error": "Identificación es requerida"}), 400
+
+    try:
+        # Conectar a la base de datos RetroNintendo y verificar en la tabla Usuarios
+        conn_retronintendo = pyodbc.connect(conn_str)
+        cursor_retronintendo = conn_retronintendo.cursor()
+        cursor_retronintendo.execute("SELECT nombre_usuario FROM Usuarios WHERE identificacion = ?", identificacion)
+        usuario = cursor_retronintendo.fetchone()
+        cursor_retronintendo.close()
+        conn_retronintendo.close()
+
+        # Si la identificación no existe en RetroNintendo, devolver que no existe
+        if not usuario:
+            return jsonify({"existe": False, "mensaje": "Identificación no encontrada en RetroNintendo"}), 404
+
+        # Conectar a la base de datos ServiciosExterno y verificar en la tabla PersonasTSE
+        conn_servicios_externo = pyodbc.connect(conn_str_servicios_externo)
+        cursor_servicios_externo = conn_servicios_externo.cursor()
+        cursor_servicios_externo.execute("SELECT nombre FROM PersonasTSE WHERE identificacion = ?", identificacion)
+        persona_externa = cursor_servicios_externo.fetchone()
+        cursor_servicios_externo.close()
+        conn_servicios_externo.close()
+
+        # Verificar si la identificación también existe en ServiciosExterno
+        if persona_externa:
+            return jsonify({"existe": True, "nombre": usuario[0], "mensaje": "Identificación encontrada en ambas bases de datos"})
+        else:
+            return jsonify({"existe": False, "mensaje": "Identificación no encontrada en ServiciosExterno"}), 404
+
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
 
 
 if __name__ == "__main__":
