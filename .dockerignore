@@ -1,9 +1,9 @@
-# Ignorar archivos innecesarios
 *.pyc
 *.pyo
 *.pyd
 __pycache__/
+instance/
 .env
-*.db
-*.log
+venv/
+*.sqlite3
 .DS_Store
