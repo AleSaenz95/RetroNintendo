@@ -1410,7 +1410,7 @@ def consultar_identificacion():
         else:
             # Enviar la solicitud GET al servidor TSE
             try:
-                response = requests.get("http://127.0.0.1:5002/api/verificar_identificacion", params={"identificacion": identificacion})
+                response = requests.get("http://127.0.0.1:5000/api/verificar_identificacion", params={"identificacion": identificacion})
                 if response.status_code == 200:
                     resultado = response.json()
                 elif response.status_code == 404:
@@ -1432,7 +1432,7 @@ def consultar_identificacion():
 def mostrar_videojuegos_proveedor():
     try:
         # Hacer una solicitud GET al servidor del proveedor externo
-        response = requests.get("http://127.0.0.1:5003/api/videojuegos_proveedor")
+        response = requests.get("http://127.0.0.1:5000/api/videojuegos_proveedor")
         videojuegos = response.json()
     except Exception as e:
         videojuegos = {"error": f"Error al conectar con el servidor del proveedor: {str(e)}"}
@@ -1452,7 +1452,7 @@ def rastrear_paquete():
         
         try:
             # Solicitar la información de rastreo al servidor de rastreo externo
-            response = requests.get(f"http://127.0.0.1:5111/api/rastreo_paquete/{codigo_paquete}")
+            response = requests.get(f"http://127.0.0.1:5000/api/rastreo_paquete/{codigo_paquete}")
             rastreo_info = response.json()
         except Exception as e:
             rastreo_info = {"error": f"Error de conexión: {str(e)}"}
@@ -1505,7 +1505,7 @@ def actualizar_estado(codigo_paquete):
 @app.route('/tipo_cambio', methods=['GET'])
 def tipo_cambio():
     try:
-        response = requests.get("http://127.0.0.1:5009/api/tipo_cambio")
+        response = requests.get("http://127.0.0.1:5000/api/tipo_cambio")
         tipo_cambio_data = response.json()
     except Exception as e:
         return jsonify({"error": f"Error al conectar con el servidor de tipo de cambio: {str(e)}"}), 500
@@ -2210,11 +2210,21 @@ def actualizar_estado_paquete():
 
 
 # Ruta para obtener el tipo de cambio
+from zeep import Client, Settings
+from zeep.transports import Transport
+import requests
+from datetime import datetime
+
 @app.route('/api/tipo_cambio', methods=['GET'])
 def obtener_tipo_cambio():
     wsdl_url = 'https://gee.bccr.fi.cr/Indicadores/Suscripciones/WS/wsindicadoreseconomicos.asmx?WSDL'
-    client = Client(wsdl=wsdl_url)
     
+    # Configuración del cliente
+    session = requests.Session()
+    transport = Transport(session=session)
+    settings = Settings(strict=False, xml_huge_tree=True)
+    client = Client(wsdl=wsdl_url, transport=transport, settings=settings)
+
     params = {
         'Indicador': '318',
         'FechaInicio': datetime.now().strftime('%d/%m/%Y'),
@@ -2229,14 +2239,15 @@ def obtener_tipo_cambio():
         # Llamar al servicio SOAP para obtener el tipo de cambio
         response = client.service.ObtenerIndicadoresEconomicos(**params)
         
-        # Extraer el tipo de cambio de acuerdo con la estructura obtenida
-        tipo_cambio_venta = response['_value_1']['_value_1'][0]['INGC011_CAT_INDICADORECONOMIC']['NUM_VALOR']
+        # Extraer el tipo de cambio de la estructura obtenida
+        tipo_cambio_venta = response['INGC011_CAT_INDICADORECONOMIC'][0]['NUM_VALOR']
         
         # Devolver el tipo de cambio en formato JSON
         return jsonify({"tipo_cambio_venta": float(tipo_cambio_venta)})
     
     except Exception as e:
         return jsonify({"error": f"Error al obtener el tipo de cambio: {str(e)}"}), 500
+
 
 
 
