@@ -1,7 +1,0 @@
-services:
-  - type: web
-    name: RetroNintendo
-    env: docker
-    plan: starter
-    dockerfilePath: Dockerfile
-    healthCheckPath: /retro_nintendo/  # Define la ruta que Render usará para verificar la salud del servicio
