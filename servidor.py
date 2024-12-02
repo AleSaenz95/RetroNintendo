@@ -26,7 +26,7 @@ import pyodbc
 
 # Cadena de conexión para la base de datos principal
 conn_str = (
-    "DRIVER={ODBC Driver 17 for SQL Server};"
+    "DRIVER={ODBC Driver 17 for SQL Server};"  # Asegúrate de usar el controlador correcto
     "SERVER=tiusr3pl.cuc-carrera-ti.ac.cr;"
     "DATABASE=tiusr3pl_RetroNintendo;"
     "UID=tiusr3pl66;"
@@ -35,17 +35,15 @@ conn_str = (
 
 # Cadena de conexión para la base de datos de servicios externos
 conn_str_servicios_externo = (
-    "DRIVER={ODBC Driver 17 for SQL Server};"
+    "DRIVER={ODBC Driver 17 for SQL Server};"  # Asegúrate de usar el controlador correcto
     "SERVER=tiusr3pl.cuc-carrera-ti.ac.cr;"
     "DATABASE=tiusr3pl_RetroNintendo_SE;"
     "UID=tiusr3pl66;"
     "PWD=LpsLt5Awx&nb8$b2;"
 )
 
+# Función para conectar a la base de datos principal
 def get_db_connection():
-    """
-    Establece conexión con la base de datos principal.
-    """
     try:
         conn = pyodbc.connect(conn_str)
         print("Conexión exitosa a la base de datos principal.")
@@ -54,31 +52,21 @@ def get_db_connection():
         print(f"Error al conectar a la base de datos principal: {e}")
         return None
 
-def get_servicios_externo_connection():
-    """
-    Establece conexión con la base de datos de servicios externos.
-    """
-    try:
-        conn = pyodbc.connect(conn_str_servicios_externo)
-        print("Conexión exitosa a la base de datos de servicios externos.")
-        return conn
-    except pyodbc.Error as e:
-        print(f"Error al conectar a la base de datos de servicios externos: {e}")
-        return None
+# Intentar conexión a la base de datos de servicios externos
+try:
+    conn_servicios_externo = pyodbc.connect(conn_str_servicios_externo)
+    print("Conexión exitosa a la base de datos de servicios externos.")
+except pyodbc.Error as e:
+    conn_servicios_externo = None
+    print(f"Error al conectar a la base de datos de servicios externos: {e}")
 
-# Intentar conectar a ambas bases de datos
-if __name__ == "__main__":
-    # Conexión a la base de datos principal
-    conn = get_db_connection()
-    if conn:
-        # Realiza operaciones con la conexión principal aquí
-        conn.close()
-
-    # Conexión a la base de datos de servicios externos
-    conn_servicios_externo = get_servicios_externo_connection()
-    if conn_servicios_externo:
-        # Realiza operaciones con la conexión de servicios externos aquí
-        conn_servicios_externo.close()
+# Probar conexión a la base de datos principal
+try:
+    conn = pyodbc.connect(conn_str)
+    print("Conexión exitosa a la base de datos principal.")
+except pyodbc.Error as e:
+    conn = None
+    print(f"Error en la conexión a la base de datos principal: {e}")
 
 
 
