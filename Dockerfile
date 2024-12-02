@@ -19,8 +19,11 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Copia el código fuente de tu aplicación
 COPY . .
 
-# Expone el puerto en el que correrá Flask
+# Copia el archivo .env (opcional si lo estás manejando localmente)
+COPY .env .env
+
+# Expone el puerto principal (puedes ajustar si tienes un único puerto para iniciar_servidores.py)
 EXPOSE 5000
 
-# Comando para iniciar el servidor
-CMD ["python", "servidor.py"]
+# Comando para iniciar el script que levanta todos los servidores
+CMD ["python", "iniciar_servidores.py"]
