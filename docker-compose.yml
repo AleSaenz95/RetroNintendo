@@ -10,6 +10,13 @@ services:
     command: python servidor.py
     container_name: servidor_principal
 
+    environment:
+      DRIVER: "{SQL Server}"
+      SERVER: "tiusr3pl.cuc-carrera-ti.ac.cr"
+      DATABASE: "tiusr3pl_RetroNintendo"
+      UID: "tiusr3pl66"
+      PWD: "LpsLt5Awx&nb8$b2"
+
   servidor_pagos:
     build:
       context: .

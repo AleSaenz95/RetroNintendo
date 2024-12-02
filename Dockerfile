@@ -19,11 +19,15 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Copia el código fuente de tu aplicación
 COPY . .
 
-# Copia el archivo .env (opcional si lo estás manejando localmente)
-COPY .env .env
+# Configurar las variables de entorno para la base de datos
+ENV DRIVER="{SQL Server}"
+ENV SERVER="tiusr3pl.cuc-carrera-ti.ac.cr"
+ENV DATABASE="tiusr3pl_RetroNintendo"
+ENV UID="tiusr3pl66"
+ENV PWD="LpsLt5Awx&nb8$b2"
 
-# Expone el puerto principal (puedes ajustar si tienes un único puerto para iniciar_servidores.py)
+# Expone el puerto en el que correrá Flask
 EXPOSE 5000
 
-# Comando para iniciar el script que levanta todos los servidores
-CMD ["python", "iniciar_servidores.py"]
+# Comando para iniciar el script de múltiples servidores
+CMD ["python", "Iniciar_servidores.py"]
