@@ -21,7 +21,7 @@ app.jinja_env.cache = {}
 
 
 
-# Cadenas de conexión
+# Cadena de conexión principal
 CONN_STR_PRINCIPAL = (
     "DRIVER={ODBC Driver 17 for SQL Server};"
     "SERVER=tiusr3pl.cuc-carrera-ti.ac.cr;"
@@ -30,19 +30,11 @@ CONN_STR_PRINCIPAL = (
     "PWD=LpsLt5Awx&nb8$b2;"
 )
 
-CONN_STR_SERVICIOS_EXTERNO = (
-    "DRIVER={ODBC Driver 17 for SQL Server};"
-    "SERVER=tiusr3pl.cuc-carrera-ti.ac.cr;"
-    "DATABASE=tiusr3pl_RetroNintendo_SE;"
-    "UID=tiusr3pl66;"
-    "PWD=LpsLt5Awx&nb8$b2;"
-)
-
-# Función para conexión a la base de datos
-def get_db_connection(conn_str):
+# Función para conexión a la base de datos principal
+def get_db_connection():
     try:
-        conn = pyodbc.connect(conn_str, timeout=5)
-        print("Conexión exitosa.")
+        conn = pyodbc.connect(CONN_STR_PRINCIPAL, timeout=5)
+        print("Conexión exitosa a la base de datos principal.")
         return conn
     except pyodbc.InterfaceError as e:
         print(f"Error de conexión (interface): {e}")
@@ -52,11 +44,11 @@ def get_db_connection(conn_str):
         print(f"Error inesperado al conectar a la base de datos: {e}")
     return None
 
-# Verificar conexiones al iniciar
-@app.route('/test_connections')
-def test_connections():
-    conn_principal = get_db_connection(CONN_STR_PRINCIPAL)
-    conn_servicios = get_db_connection(CONN_STR_SERVICIOS_EXTERNO)
+
+# Verificar conexión al iniciar
+@app.route('/test_connection')
+def test_connection():
+    conn_principal = get_db_connection()
 
     if conn_principal:
         conn_principal.close()
@@ -64,15 +56,8 @@ def test_connections():
     else:
         principal_status = "Error al conectar a RetroNintendo."
 
-    if conn_servicios:
-        conn_servicios.close()
-        servicios_status = "Conexión a ServiciosExterno exitosa."
-    else:
-        servicios_status = "Error al conectar a ServiciosExterno."
-
     return jsonify({
-        "RetroNintendo": principal_status,
-        "ServiciosExterno": servicios_status
+        "RetroNintendo": principal_status
     })
 
 
@@ -263,7 +248,7 @@ def comprar():
 
             if response.status_code == 200:
                 # Conectar a la base de datos
-                conn = get_db_connection(CONN_STR_PRINCIPAL)
+                conn = get_db_connection()
                 if conn is None:
                     return "Error al conectar con la base de datos.", 500
 
@@ -320,7 +305,7 @@ def comprar():
 
     # Si el método es GET, obtener los detalles del producto
     item_id = request.args.get('item_id')
-    conn = get_db_connection(CONN_STR_PRINCIPAL)
+    conn = get_db_connection()
     if conn is None:
         return "Error al conectar con la base de datos.", 500
 
@@ -676,7 +661,7 @@ def manejar_respuesta(es_json, mensaje, redireccion=None):
 # Función auxiliar para manejar intentos fallidos
 def manejar_intentos_fallidos(usuario_id, intentos_fallidos, correo, es_json):
     intentos_fallidos = (intentos_fallidos or 0) + 1
-    conn = get_db_connection(CONN_STR_PRINCIPAL)
+    conn = get_db_connection()
     try:
         cursor = conn.cursor()
         cursor.execute("UPDATE Usuarios SET intentos_fallidos = ? WHERE usuario_id = ?", (intentos_fallidos, usuario_id))
@@ -740,7 +725,7 @@ def actualizar_contrasena():
             return redirect(url_for('actualizar_contrasena'))
 
         # Conectar a la base de datos
-        conn = get_db_connection(CONN_STR_PRINCIPAL)
+        conn = get_db_connection()
         if conn is None:
             flash("Error al conectar con la base de datos.")
             return redirect(url_for('actualizar_contrasena'))
@@ -834,7 +819,7 @@ def restablecer():
             return redirect(url_for('restablecer'))
 
         # Conectar a la base de datos
-        conn = get_db_connection(CONN_STR_PRINCIPAL)
+        conn = get_db_connection()
         if conn is None:
             flash("Error al conectar con la base de datos.")
             return redirect(url_for('restablecer'))
@@ -887,7 +872,7 @@ def verificar_desbloqueo():
                 return redirect(url_for('restablecer'))
 
             # Conectar a la base de datos
-            conn = get_db_connection(CONN_STR_PRINCIPAL)
+            conn = get_db_connection()
             if conn is None:
                 flash("Error al conectar con la base de datos.")
                 return redirect(url_for('verificar_desbloqueo'))
@@ -941,7 +926,7 @@ def verificar_codigo():
                 return redirect(url_for('login'))
 
             # Conectar a la base de datos
-            conn = get_db_connection(CONN_STR_PRINCIPAL)
+            conn = get_db_connection()
             if conn is None:
                 flash("Error al conectar con la base de datos.")
                 return redirect(url_for('verificar_codigo'))
@@ -987,7 +972,7 @@ def solicitar_restablecimiento():
             return redirect(url_for('solicitar_restablecimiento'))
 
         # Conectar a la base de datos
-        conn = get_db_connection(CONN_STR_PRINCIPAL)
+        conn = get_db_connection()
         if conn is None:
             flash("Error al conectar con la base de datos.")
             return redirect(url_for('solicitar_restablecimiento'))
@@ -1034,7 +1019,7 @@ def verificar_pregunta_seguridad():
     usuario_id = session.get('usuario_id_reset')
 
     # Conectar a la base de datos
-    conn = get_db_connection(CONN_STR_PRINCIPAL)
+    conn = get_db_connection()
     if conn is None:
         flash("Error al conectar con la base de datos.")
         return redirect(url_for('solicitar_restablecimiento'))
@@ -1122,7 +1107,7 @@ def actualizar_nueva_contrasena():
             return redirect(url_for('solicitar_restablecimiento'))
 
         # Conectar a la base de datos
-        conn = get_db_connection(CONN_STR_PRINCIPAL)
+        conn = get_db_connection()
         if conn is None:
             flash("Error al conectar con la base de datos.")
             return redirect(url_for('actualizar_nueva_contrasena'))
@@ -1159,7 +1144,7 @@ def actualizar_nueva_contrasena():
 
 def registrar_auditoria(usuario_id, tipo_evento, detalle=""):
     # Conectar a la base de datos
-    conn = get_db_connection(CONN_STR_PRINCIPAL)
+    conn = get_db_connection()
     if conn is None:
         print("Error al conectar con la base de datos para registrar la auditoría.")
         return
@@ -1184,7 +1169,7 @@ def registrar_auditoria(usuario_id, tipo_evento, detalle=""):
 @app.route('/auditoria')
 def auditoria():
     # Conectar a la base de datos
-    conn = get_db_connection(CONN_STR_PRINCIPAL)
+    conn = get_db_connection()
     if conn is None:
         flash("Error al conectar con la base de datos.")
         return redirect(url_for('index'))
@@ -1244,7 +1229,7 @@ def get_provincias():
         return jsonify({"error": "El parámetro 'pais' es requerido."}), 400
 
     # Conectar a la base de datos
-    conn = get_db_connection(CONN_STR_PRINCIPAL)
+    conn = get_db_connection()
     if conn is None:
         return jsonify({"error": "No se pudo conectar a la base de datos."}), 500
 
@@ -1274,7 +1259,7 @@ def get_cantones():
         return jsonify({"error": "El parámetro 'provincia' es requerido."}), 400
 
     # Conectar a la base de datos
-    conn = get_db_connection(CONN_STR_PRINCIPAL)
+    conn = get_db_connection()
     if conn is None:
         return jsonify({"error": "No se pudo conectar a la base de datos."}), 500
 
@@ -1305,7 +1290,7 @@ def get_distritos():
         return jsonify({"error": "El parámetro 'canton' es requerido."}), 400
 
     # Conectar a la base de datos
-    conn = get_db_connection(CONN_STR_PRINCIPAL)
+    conn = get_db_connection()
     if conn is None:
         return jsonify({"error": "No se pudo conectar a la base de datos."}), 500
 
@@ -1331,7 +1316,7 @@ def get_distritos():
 @app.route('/ver_usuarios')
 def ver_usuarios():
     # Conectar a la base de datos
-    conn = get_db_connection(CONN_STR_PRINCIPAL)
+    conn = get_db_connection()
     if conn is None:
         flash("Error al conectar con la base de datos.")
         return redirect(url_for('index'))
@@ -1367,7 +1352,7 @@ def ver_usuarios():
 @app.route('/solicitudes_cotizacion')
 def ver_solicitudes_cotizacion():
     # Conectar a la base de datos
-    conn = get_db_connection(CONN_STR_PRINCIPAL)
+    conn = get_db_connection()
     if conn is None:
         flash("Error al conectar con la base de datos.")
         return redirect(url_for('index'))
@@ -1746,7 +1731,7 @@ def solicitud_cotizacion():
 def comparar_precios():
     # Conectar a la base de datos principal y de servicios externos
     conn_inventario = get_db_connection(CONN_STR_PRINCIPAL)
-    conn_competencia = get_db_connection(CONN_STR_SERVICIOS_EXTERNO)
+    conn_competencia = get_db_connection(CONN_STR_PRINCIPAL)
 
     if not conn_inventario or not conn_competencia:
         return jsonify({"error": "Error al conectar a una o ambas bases de datos."}), 500
@@ -1814,7 +1799,7 @@ def pago_tarjeta():
     fecha_transaccion = datetime.now()
 
     # Conectar a la base de datos
-    conn = get_db_connection(CONN_STR_SERVICIOS_EXTERNO)
+    conn = get_db_connection()
     if not conn:
         return jsonify({"error": "Error al conectar con la base de datos."}), 500
 
@@ -1860,7 +1845,7 @@ def agregar_saldo():
         return jsonify({"error": "Número de tarjeta y monto son requeridos"}), 400
 
     # Conectar a la base de datos de Servicios Externos
-    conn = get_db_connection(CONN_STR_SERVICIOS_EXTERNO)
+    conn = get_db_connection()
     if not conn:
         return jsonify({"error": "Error al conectar con la base de datos de servicios externos."}), 500
 
@@ -1919,7 +1904,7 @@ def procesar_compra():
         return jsonify({"error": "Formato de fecha de vencimiento inválido. Use MM/YY"}), 400
 
     # Conectar a la base de datos de Servicios Externos
-    conn = get_db_connection(CONN_STR_SERVICIOS_EXTERNO)
+    conn = get_db_connection()
     if not conn:
         return jsonify({"error": "Error al conectar con la base de datos de servicios externos."}), 500
 
@@ -2006,7 +1991,7 @@ def registrar_tarjeta():
         return jsonify({"error": "El saldo debe ser un número válido"}), 400
 
     # Conectar a la base de datos de Servicios Externos
-    conn = get_db_connection(CONN_STR_SERVICIOS_EXTERNO)
+    conn = get_db_connection()
     if not conn:
         return jsonify({"error": "Error al conectar con la base de datos de servicios externos."}), 500
 
@@ -2039,7 +2024,7 @@ def registrar_tarjeta():
 @app.route('/api/videojuegos_proveedor', methods=['GET'])
 def obtener_videojuegos_proveedor():
     # Conectar a la base de datos de servicios externos
-    conn = get_db_connection(CONN_STR_SERVICIOS_EXTERNO)
+    conn = get_db_connection()
     if not conn:
         return jsonify({"error": "Error al conectar con la base de datos de servicios externos."}), 500
 
@@ -2085,7 +2070,7 @@ def agregar_videojuegos_proveedor():
         return jsonify({"error": "Se esperaba una lista de videojuegos"}), 400
 
     # Conectar a la base de datos de Servicios Externos
-    conn = get_db_connection(CONN_STR_SERVICIOS_EXTERNO)
+    conn = get_db_connection()
     if not conn:
         return jsonify({"error": "Error al conectar con la base de datos de servicios externos."}), 500
 
@@ -2128,7 +2113,7 @@ def agregar_videojuegos_proveedor():
 @app.route('/api/rastreo_paquete/<codigo_paquete>', methods=['GET'])
 def obtener_estado_paquete(codigo_paquete):
     # Conectar a la base de datos de Servicios Externos
-    conn = get_db_connection(CONN_STR_SERVICIOS_EXTERNO)
+    conn = get_db_connection()
     if not conn:
         return jsonify({"error": "Error al conectar con la base de datos de servicios externos."}), 500
 
@@ -2179,7 +2164,7 @@ def actualizar_estado_paquete():
         return jsonify({"error": "Código de paquete y nuevo estado son necesarios"}), 400
 
     # Conectar a la base de datos de Servicios Externos
-    conn = get_db_connection(CONN_STR_SERVICIOS_EXTERNO)
+    conn = get_db_connection()
     if not conn:
         return jsonify({"error": "Error al conectar con la base de datos de servicios externos."}), 500
 
@@ -2279,7 +2264,7 @@ def verificar_identificacion():
             return jsonify({"existe": False, "mensaje": "Identificación no encontrada en RetroNintendo"}), 404
 
         # Conectar a la base de datos Servicios Externos y verificar en la tabla PersonasTSE
-        conn_servicios_externo = get_db_connection(CONN_STR_SERVICIOS_EXTERNO)
+        conn_servicios_externo = get_db_connection(CONN_STR_PRINCIPAL)
         if not conn_servicios_externo:
             return jsonify({"error": "Error al conectar a la base de datos de servicios externos."}), 500
 
