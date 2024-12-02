@@ -1,6 +1,14 @@
 # Usa una imagen base de Python
 FROM python:3.9-slim
 
+# Instala las dependencias de sistema necesarias para pyodbc
+RUN apt-get update && apt-get install -y \
+    unixodbc \
+    unixodbc-dev \
+    libodbc1 \
+    build-essential \
+    && rm -rf /var/lib/apt/lists/*
+
 # Establece el directorio de trabajo
 WORKDIR /app
 
