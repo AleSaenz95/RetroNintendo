@@ -23,11 +23,11 @@ app.jinja_env.cache = {}
 
 # Cadena de conexión principal
 CONN_STR_PRINCIPAL = (
-    "DRIVER={ODBC Driver 17 for SQL Server};"
-    "SERVER=tiusr3pl.cuc-carrera-ti.ac.cr;"
-    "DATABASE=tiusr3pl_RetroNintendo;"
-    "UID=tiusr3pl66;"
-    "PWD=LpsLt5Awx&nb8$b2;"
+   f"DRIVER={os.getenv('DB_DRIVER')};"
+    f"SERVER={os.getenv('DB_SERVER')};"
+    f"DATABASE={os.getenv('DB_DATABASE')};"
+    f"UID={os.getenv('DB_USER')};"
+    f"PWD={os.getenv('DB_PASSWORD')};"
 )
 
 # Función para conexión a la base de datos principal
