@@ -1,6 +1,5 @@
-__pycache__/
+__pycache__
 *.pyc
-*.pyo
-*.pyd
-.Python
-.env
+.git
+.DS_Store
+node_modules
