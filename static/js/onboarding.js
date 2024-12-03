@@ -1,38 +1,34 @@
 document.addEventListener("DOMContentLoaded", () => {
-    console.log("DOM cargado correctamente");
-
-    const onboardingSeen = localStorage.getItem("onboardingSeen");
-    console.log("Valor de onboardingSeen:", onboardingSeen);
-
     const slides = document.querySelectorAll(".onboarding-slide");
-    console.log("Diapositivas encontradas:", slides.length);
+    console.log("Diapositivas encontradas:", slides.length); // Verifica el número de diapositivas encontradas
+
+    if (!slides || slides.length === 0) {
+        console.error("No se encontraron diapositivas con la clase '.onboarding-slide'.");
+        return;
+    }
 
     let currentSlide = 0;
 
-    if (!onboardingSeen) {
-        const container = document.getElementById("onboarding-container");
-        
-        console.log("Mostrando contenedor de onboarding");
-        container.style.display = "flex"; // Asegura que sea visible
-        console.log("Estilo aplicado:", container.style.display);
+    // Mostrar la primera diapositiva al cargar
+    slides[currentSlide].classList.add("active");
 
-        slides[currentSlide].classList.add("active");
+    // Botones "Siguiente"
+    document.querySelectorAll(".next-slide").forEach((button) => {
+        button.addEventListener("click", () => {
+            slides[currentSlide].classList.remove("active");
+            currentSlide++;
+            if (currentSlide < slides.length) {
+                slides[currentSlide].classList.add("active");
+            }
+        });
+    });
 
-        document.querySelectorAll(".next-slide").forEach((button) =>
-            button.addEventListener("click", () => {
-                console.log("Siguiente diapositiva");
-                slides[currentSlide].classList.remove("active");
-                currentSlide++;
-                if (currentSlide < slides.length) {
-                    slides[currentSlide].classList.add("active");
-                }
-            })
-        );
-
-        document.getElementById("close-onboarding").addEventListener("click", () => {
-            console.log("Onboarding completado");
-            localStorage.setItem("onboardingSeen", "true");
-            container.style.display = "none";
+    // Botón "Cerrar"
+    const closeButton = document.getElementById("close-onboarding");
+    if (closeButton) {
+        closeButton.addEventListener("click", () => {
+            document.cookie = "onboardingSeen=true; path=/";
+            window.location.href = "/";
         });
     }
 });

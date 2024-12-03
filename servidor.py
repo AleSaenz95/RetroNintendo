@@ -710,11 +710,19 @@ def logout():
     return redirect(url_for('login'))
 
 # Ruta para el index, donde se muestra el nombre del usuario si está loggeado
-@app.route('/')
+@app.route("/")
 def index():
-    nombre_usuario = session.get('nombre_usuario')
-    return render_template('index.html', nombre_usuario=nombre_usuario)
+    nombre_usuario = session.get("nombre_usuario")
+    # Verificar si el usuario ya vio el onboarding
+    onboarding_seen = request.cookies.get("onboardingSeen")
+    if not onboarding_seen:
+        return redirect(url_for("mostrar_bienvenida"))
+    return render_template("index.html", nombre_usuario=nombre_usuario)
 
+# Ruta para la pantalla de bienvenida (onboarding)
+@app.route("/bienvenida")
+def mostrar_bienvenida():
+    return render_template("onboarding.html")
 #actualizar contrasena vencida
 
 @app.route('/actualizar_contrasena', methods=['GET', 'POST'])

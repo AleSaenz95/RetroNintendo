@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Onboarding - RetroNintendo</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/estilos.css') }}">
+</head>
+<body>
+    <div id="onboarding-container">
+        <div class="onboarding-slide active">
+            <img src="{{ url_for('static', filename='media/classic-games.jpg') }}" alt="Explora videojuegos clásicos">
+            <h2>¡Explora videojuegos clásicos!</h2>
+            <p>Descubre todos los juegos que marcaron tu infancia, en un solo lugar.</p>
+            <button class="next-slide">Siguiente</button>
+        </div>
+        <div class="onboarding-slide">
+            <img src="{{ url_for('static', filename='media/worldwide-shipping.jpg') }}" alt="Envíos internacionales">
+            <h2>¡Envíos a donde estés!</h2>
+            <p>Recibe tus juegos favoritos sin importar dónde te encuentres.</p>
+            <button class="next-slide">Siguiente</button>
+        </div>
+        <div class="onboarding-slide">
+            <img src="{{ url_for('static', filename='media/welcome.jpg') }}" alt="Bienvenido a RetroNintendo">
+            <h2>¡Bienvenido a tu espacio favorito!</h2>
+            <p>Disfruta de una experiencia única dedicada a los fans de Nintendo.</p>
+            <button id="close-onboarding">¡Empezar!</button>
+        </div>
+    </div>
+
+    <!-- Coloca el script al final del body -->
+    <script src="{{ url_for('static', filename='js/onboarding.js') }}"></script>
+</body>
+</html>
