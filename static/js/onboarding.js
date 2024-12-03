@@ -10,10 +10,13 @@ document.addEventListener("DOMContentLoaded", () => {
         slides[currentSlide].classList.remove("active"); // Oculta la actual
         currentSlide++;
 
-        if (currentSlide < slides.length) {
-            slides[currentSlide].classList.add("active"); // Muestra la siguiente
-        } else {
-            clearInterval(slideInterval); // Detén el intervalo cuando termine
+        if (currentSlide < slides.length - 1) {
+            // Muestra la siguiente diapositiva mientras no sea la última
+            slides[currentSlide].classList.add("active");
+        } else if (currentSlide === slides.length - 1) {
+            // Muestra la última diapositiva y detiene el intervalo
+            slides[currentSlide].classList.add("active");
+            clearInterval(slideInterval); // Detén el intervalo al llegar a la última
         }
     };
 
