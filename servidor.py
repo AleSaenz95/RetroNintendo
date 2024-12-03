@@ -2,7 +2,7 @@ import random
 import smtplib
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
-from flask import Flask, render_template, render_template_string, request, redirect, url_for, flash, jsonify, session
+from flask import Flask, render_template, render_template_string, request, redirect, url_for, flash, jsonify, session, send_from_directory
 from werkzeug.security import generate_password_hash, check_password_hash
 from datetime import datetime, timedelta
 import pyodbc
@@ -2319,6 +2319,12 @@ def verificar_identificacion():
         if conn_servicios_externo:
             conn_servicios_externo.close()
 
+
+
+
+@app.route('/sw.js')
+def service_worker():
+    return send_from_directory('', 'sw.js')
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5000, debug=True)
