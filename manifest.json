@@ -1,6 +1,7 @@
 {
-  "name": "RetroNintendo",
+  "name": "RetroNintendo Store",
   "short_name": "RetroNintendo",
+  "description": "Tienda de videojuegos clásicos de Nintendo.",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#000000",
@@ -8,13 +9,13 @@
   "icons": [
     {
       "src": "/static/media/icon-192x192.png",
-      "sizes": "192x192",
-      "type": "image/png"
+      "type": "image/png",
+      "sizes": "192x192"
     },
     {
       "src": "/static/media/icon-512x512.png",
-      "sizes": "512x512",
-      "type": "image/png"
+      "type": "image/png",
+      "sizes": "512x512"
     }
   ]
 }
