@@ -10,8 +10,12 @@ document.addEventListener("DOMContentLoaded", () => {
     let currentSlide = 0;
 
     if (!onboardingSeen) {
-        console.log("Mostrando onboarding...");
-        document.getElementById("onboarding-container").style.display = "flex";
+        const container = document.getElementById("onboarding-container");
+        
+        console.log("Mostrando contenedor de onboarding");
+        container.style.display = "flex"; // Asegura que sea visible
+        console.log("Estilo aplicado:", container.style.display);
+
         slides[currentSlide].classList.add("active");
 
         document.querySelectorAll(".next-slide").forEach((button) =>
@@ -28,7 +32,7 @@ document.addEventListener("DOMContentLoaded", () => {
         document.getElementById("close-onboarding").addEventListener("click", () => {
             console.log("Onboarding completado");
             localStorage.setItem("onboardingSeen", "true");
-            document.getElementById("onboarding-container").style.display = "none";
+            container.style.display = "none";
         });
     }
 });
