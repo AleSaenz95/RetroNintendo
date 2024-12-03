@@ -11,7 +11,7 @@
 
     <!-- Manifest para PWA -->
     <link rel="manifest" href="/manifest.json">
-
+    <meta name="theme-color" content="#e50914">
     <style>
         /* Estilos generales del cuerpo */
         body {
@@ -290,6 +290,19 @@
     <footer>
         <p>&copy; 2024 RetroNintendo - Todos los derechos reservados.</p>
     </footer>
+
+    <script>
+        if ("serviceWorker" in navigator) {
+            navigator.serviceWorker
+                .register("/sw.js")
+                .then(() => {
+                    console.log("Service Worker registrado exitosamente.");
+                })
+                .catch((error) => {
+                    console.error("Error al registrar el Service Worker:", error);
+                });
+        }
+    </script>
 
     <script src="{{ url_for('static', filename='js/onboarding.js') }}"></script>
 
