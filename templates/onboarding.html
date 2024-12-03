@@ -12,13 +12,11 @@
             <img src="{{ url_for('static', filename='media/classic-games.jpg') }}" alt="Explora videojuegos clásicos">
             <h2>¡Explora videojuegos clásicos!</h2>
             <p>Descubre todos los juegos que marcaron tu infancia, en un solo lugar.</p>
-            <button class="next-slide">Siguiente</button>
         </div>
         <div class="onboarding-slide">
             <img src="{{ url_for('static', filename='media/worldwide-shipping.jpg') }}" alt="Envíos internacionales">
             <h2>¡Envíos a donde estés!</h2>
             <p>Recibe tus juegos favoritos sin importar dónde te encuentres.</p>
-            <button class="next-slide">Siguiente</button>
         </div>
         <div class="onboarding-slide">
             <img src="{{ url_for('static', filename='media/welcome.jpg') }}" alt="Bienvenido a RetroNintendo">
@@ -27,6 +25,7 @@
             <button id="close-onboarding">¡Empezar!</button>
         </div>
     </div>
+    
 
     <!-- Coloca el script al final del body -->
     <script src="{{ url_for('static', filename='js/onboarding.js') }}"></script>

@@ -1,34 +1,31 @@
 document.addEventListener("DOMContentLoaded", () => {
     const slides = document.querySelectorAll(".onboarding-slide");
-    console.log("Diapositivas encontradas:", slides.length); // Verifica el número de diapositivas encontradas
-
-    if (!slides || slides.length === 0) {
-        console.error("No se encontraron diapositivas con la clase '.onboarding-slide'.");
-        return;
-    }
-
     let currentSlide = 0;
 
     // Mostrar la primera diapositiva al cargar
     slides[currentSlide].classList.add("active");
 
-    // Botones "Siguiente"
-    document.querySelectorAll(".next-slide").forEach((button) => {
-        button.addEventListener("click", () => {
-            slides[currentSlide].classList.remove("active");
-            currentSlide++;
-            if (currentSlide < slides.length) {
-                slides[currentSlide].classList.add("active");
-            }
-        });
-    });
+    // Función para cambiar a la siguiente diapositiva
+    const showNextSlide = () => {
+        slides[currentSlide].classList.remove("active"); // Oculta la actual
+        currentSlide++;
 
-    // Botón "Cerrar"
+        if (currentSlide < slides.length) {
+            slides[currentSlide].classList.add("active"); // Muestra la siguiente
+        } else {
+            clearInterval(slideInterval); // Detén el intervalo cuando termine
+        }
+    };
+
+    // Cambiar diapositiva automáticamente cada 3 segundos
+    const slideInterval = setInterval(showNextSlide, 3000);
+
+    // Botón "Empezar" en la última diapositiva
     const closeButton = document.getElementById("close-onboarding");
     if (closeButton) {
         closeButton.addEventListener("click", () => {
-            document.cookie = "onboardingSeen=true; path=/";
-            window.location.href = "/";
+            document.cookie = "onboardingSeen=true; path=/"; // Guardar cookie
+            window.location.href = "/"; // Redirigir al index
         });
     }
 });
