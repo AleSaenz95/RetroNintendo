@@ -13,7 +13,7 @@ apt-get update && ACCEPT_EULA=Y apt-get install -y msodbcsql17
 # Limpia el caché para reducir el tamaño
 apt-get clean && rm -rf /var/lib/apt/lists/*
 
-# Configura el archivo odbcinst.ini (si no está configurado automáticamente)
+# Configura manualmente el archivo odbcinst.ini si no existe
 cat <<EOL > /etc/odbcinst.ini
 [ODBC Driver 17 for SQL Server]
 Description=Microsoft ODBC Driver 17 for SQL Server
@@ -21,5 +21,5 @@ Driver=/opt/microsoft/msodbcsql17/lib64/libmsodbcsql-17.9.so.2.1
 UsageCount=1
 EOL
 
-# Instala las dependencias de Python en un entorno virtual
+# Continúa con la instalación de las dependencias de Python
 pip install --no-cache-dir -r requirements.txt
