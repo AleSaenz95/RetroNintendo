@@ -3,7 +3,6 @@
 *.pyd
 __pycache__/
 instance/
-.env
 venv/
 *.sqlite3
 .DS_Store
