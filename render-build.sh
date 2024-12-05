@@ -1,15 +1,28 @@
 #!/usr/bin/env bash
 
-# Actualiza los paquetes y agrega el repositorio de Microsoft
-apt-get update && apt-get install -y curl apt-transport-https gnupg unixodbc-dev
+# Actualizar paquetes
+apt-get update
+
+# Instalar dependencias necesarias
+apt-get install -y gnupg curl
+
+# Agregar la clave GPG del repositorio de Microsoft
 curl https://packages.microsoft.com/keys/microsoft.asc | apt-key add -
-curl https://packages.microsoft.com/config/debian/11/prod.list > /etc/apt/sources.list.d/mssql-release.list
 
-# Instala el driver ODBC 18
-apt-get update && ACCEPT_EULA=Y apt-get install -y msodbcsql18
+# Agregar el repositorio de Microsoft para el ODBC Driver 17
+curl https://packages.microsoft.com/config/ubuntu/20.04/prod.list > /etc/apt/sources.list.d/mssql-release.list
 
-# Limpieza del entorno
-apt-get clean && rm -rf /var/lib/apt/lists/*
+# Instalar el driver ODBC 17
+apt-get update
+ACCEPT_EULA=Y apt-get install -y msodbcsql17 unixodbc-dev
 
-# Instala las dependencias de Python
+# Verificar instalación del driver
+echo "Verificando instalación del Driver ODBC 17:"
+odbcinst -q -d
+
+# Limpiar archivos innecesarios
+apt-get clean
+rm -rf /var/lib/apt/lists/*
+
+# Instalar dependencias de Python
 pip install --no-cache-dir -r requirements.txt

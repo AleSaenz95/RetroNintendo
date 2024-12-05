@@ -32,39 +32,37 @@ CONN_STR_PRINCIPAL = (
 
 
 
-# Función para conexión a la base de datos principal
+
+# Configuración de conexión para RetroNintendo
+server = 'tiusr3pl.cuc-carrera-ti.ac.cr'
+database = 'tiusr3pl_RetroNintendo'  # Base de datos para RetroNintendo
+username = 'sitios'
+password = 'SitiosC32024'
+connection_string = f'DRIVER={{ODBC Driver 17 for SQL Server}};SERVER={server};DATABASE={database};UID={username};PWD={password}'
+
 def get_db_connection():
     try:
-        conn = pyodbc.connect(CONN_STR_PRINCIPAL, timeout=5)
-        print("Conexión exitosa a la base de datos principal.")
-        return conn
+        connection = pyodbc.connect(connection_string, timeout=5)
+        print("Conexión exitosa a RetroNintendo.")
+        return connection
     except pyodbc.InterfaceError as e:
         print(f"Error de conexión (interface): {e}")
     except pyodbc.OperationalError as e:
         print(f"Error operacional: {e}")
-    except pyodbc.Error as e:
-        print(f"Error de ODBC: {e.args}")
     except Exception as e:
         print(f"Error inesperado al conectar a la base de datos: {e}")
     return None
 
 
-
-
-# Verificar conexión al iniciar
 @app.route('/test_connection')
 def test_connection():
-    conn_principal = get_db_connection()
-
-    if conn_principal:
-        conn_principal.close()
-        principal_status = "Conexión a RetroNintendo exitosa."
+    conn = get_db_connection()
+    if conn:
+        conn.close()
+        return jsonify({"status": "Conexión exitosa a RetroNintendo"})
     else:
-        principal_status = "Error al conectar a RetroNintendo."
+        return jsonify({"status": "Error al conectar a RetroNintendo"})
 
-    return jsonify({
-        "status": principal_status
-    })
 
 
 
