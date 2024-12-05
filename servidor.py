@@ -22,15 +22,14 @@ app.jinja_env.cache = {}
 
 
 # Cadena de conexión principal con ODBC Driver 18 y opciones de seguridad
+# Cadena de conexión para la base de datos local
 CONN_STR_PRINCIPAL = (
-    "DRIVER={ODBC Driver 18 for SQL Server};"
-    "SERVER=tiusr3pl.cuc-carrera-ti.ac.cr;"
-    "DATABASE=tiusr3pl_RetroNintendo;"
-    "UID=tiusr3pl66;"
-    "PWD=LpsLt5Awx&nb8$b2;"
-    "Encrypt=yes;"
-    "TrustServerCertificate=yes;"
+    "DRIVER={SQL Server};"
+    "SERVER=ALE;"
+    "DATABASE=Nueva_BD_RetroNintendo;"
+    "Trusted_Connection=yes;"
 )
+
 
 
 # Función para conexión a la base de datos principal
