@@ -21,14 +21,17 @@ app.jinja_env.cache = {}
 
 
 
-# Cadena de conexión principal
+# Cadena de conexión principal con ODBC Driver 18 y opciones de seguridad
 CONN_STR_PRINCIPAL = (
     "DRIVER={ODBC Driver 18 for SQL Server};"
     "SERVER=tiusr3pl.cuc-carrera-ti.ac.cr;"
     "DATABASE=tiusr3pl_RetroNintendo;"
     "UID=tiusr3pl66;"
     "PWD=LpsLt5Awx&nb8$b2;"
+    "Encrypt=yes;"
+    "TrustServerCertificate=yes;"
 )
+
 
 # Función para conexión a la base de datos principal
 def get_db_connection():
@@ -40,9 +43,12 @@ def get_db_connection():
         print(f"Error de conexión (interface): {e}")
     except pyodbc.OperationalError as e:
         print(f"Error operacional: {e}")
+    except pyodbc.Error as e:
+        print(f"Error de ODBC: {e.args}")
     except Exception as e:
         print(f"Error inesperado al conectar a la base de datos: {e}")
     return None
+
 
 
 
@@ -58,8 +64,9 @@ def test_connection():
         principal_status = "Error al conectar a RetroNintendo."
 
     return jsonify({
-        "RetroNintendo": principal_status
+        "status": principal_status
     })
+
 
 
 
