@@ -10,7 +10,12 @@ from datetime import date
 import requests 
 import os
 from decimal import Decimal
-from zeep import Client
+from zeep import Client, Settings
+from zeep.transports import Transport
+import requests
+from datetime import datetime
+from requests import Session
+
 
 
 app = Flask(__name__, template_folder='templates')
@@ -1664,7 +1669,10 @@ def ver_resenas_json():
 
 
 
-#cotizacion
+
+
+
+
 @app.route('/api/solicitud_cotizacion', methods=['POST'])
 def solicitud_cotizacion():
     data = request.json
@@ -1743,13 +1751,13 @@ def solicitud_cotizacion():
         if conn:
             conn.close()
 
-    # Responder con un mensaje de confirmación
-    return jsonify({
-        'mensaje': 'Solicitud de cotización recibida',
-        'cotizacion_id': cotizacion_id,
-        'total_estimado': total_estimado
-    }), 200
+    # Redirigir a la página de solicitudes de cotización
+    return redirect('/solicitudes_cotizacion')
 
+@app.route('/solicitudes_cotizacion', methods=['GET'])
+def solicitudes_cotizacion():
+    # Renderizar el HTML de solicitudes de cotización
+    return render_template('solicitudes_cotizacion.html')
 
 
 @app.route('/api/comparar_precios', methods=['GET'])
@@ -2220,43 +2228,41 @@ def actualizar_estado_paquete():
 
 
 # Ruta para obtener el tipo de cambio
-from zeep import Client, Settings
-from zeep.transports import Transport
-import requests
-from datetime import datetime
 
 @app.route('/api/tipo_cambio', methods=['GET'])
 def obtener_tipo_cambio():
     wsdl_url = 'https://gee.bccr.fi.cr/Indicadores/Suscripciones/WS/wsindicadoreseconomicos.asmx?WSDL'
-    
-    # Configuración del cliente
-    session = requests.Session()
-    transport = Transport(session=session)
-    settings = Settings(strict=False, xml_huge_tree=True)
-    client = Client(wsdl=wsdl_url, transport=transport, settings=settings)
 
-    params = {
-        'Indicador': '318',
-        'FechaInicio': datetime.now().strftime('%d/%m/%Y'),
-        'FechaFinal': datetime.now().strftime('%d/%m/%Y'),
-        'Nombre': 'saenz2595@gmail.com',
-        'SubNiveles': 'N',
-        'CorreoElectronico': 'saenz2595@gmail.com',
-        'Token': '59JGE1L5EZ'
-    }
-    
     try:
-        # Llamar al servicio SOAP para obtener el tipo de cambio
+        # Configuración del cliente SOAP
+        session = Session()
+        session.verify = False  # Si hay problemas con certificados SSL, desactiva la verificación
+        transport = Transport(session=session)
+        settings = Settings(strict=False, xml_huge_tree=True)
+        client = Client(wsdl=wsdl_url, transport=transport, settings=settings)
+
+        # Parámetros para el servicio SOAP
+        params = {
+            'Indicador': '318',
+            'FechaInicio': datetime.now().strftime('%d/%m/%Y'),
+            'FechaFinal': datetime.now().strftime('%d/%m/%Y'),
+            'Nombre': 'saenz2595@gmail.com',
+            'SubNiveles': 'N',
+            'CorreoElectronico': 'saenz2595@gmail.com',
+            'Token': '59JGE1L5EZ'
+        }
+
+        # Llamada al servicio SOAP
         response = client.service.ObtenerIndicadoresEconomicos(**params)
-        
-        # Extraer el tipo de cambio de la estructura obtenida
+
+        # Extraer el tipo de cambio
         tipo_cambio_venta = response['INGC011_CAT_INDICADORECONOMIC'][0]['NUM_VALOR']
-        
-        # Devolver el tipo de cambio en formato JSON
+
         return jsonify({"tipo_cambio_venta": float(tipo_cambio_venta)})
     
     except Exception as e:
-        return jsonify({"error": f"Error al obtener el tipo de cambio: {str(e)}"}), 500
+        # Manejo de errores
+        return jsonify({"error": f"Error al conectar con el servidor de tipo de cambio: {str(e)}"}), 500
 
 
 
@@ -2330,5 +2336,5 @@ def verificar_identificacion():
 def service_worker():
     return send_from_directory('', 'sw.js')
 
-if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=5030, debug=True)
+if __name__ == '__main__':
+    app.run(debug=True)
