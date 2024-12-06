@@ -2331,4 +2331,4 @@ def service_worker():
     return send_from_directory('', 'sw.js')
 
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=5000, debug=True)
+    app.run(host="0.0.0.0", port=5030, debug=True)
