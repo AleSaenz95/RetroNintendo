@@ -11,7 +11,7 @@
 
     <!-- Manifest para PWA -->
     <link rel="manifest" href="/manifest.json">
-    <meta name="theme-color" content="#e50914">
+  <meta name="theme-color" content="#000000">
     <style>
         /* Estilos generales del cuerpo */
         body {
@@ -293,15 +293,15 @@
 
     <script>
         if ("serviceWorker" in navigator) {
-            navigator.serviceWorker
-                .register("/sw.js")
-                .then(() => {
-                    console.log("Service Worker registrado exitosamente.");
-                })
-                .catch((error) => {
-                    console.error("Error al registrar el Service Worker:", error);
-                });
+      navigator.serviceWorker.register("/sw.js").then(
+        (registration) => {
+          console.log("Service Worker registrado con éxito:", registration);
+        },
+        (error) => {
+          console.log("Falló el registro del Service Worker:", error);
         }
+      );
+    }
     </script>
 
     <script src="{{ url_for('static', filename='js/onboarding.js') }}"></script>
