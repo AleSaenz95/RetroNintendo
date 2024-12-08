@@ -1,5 +1,5 @@
 const CACHE_NAME = "RetroNintendo-cache-v1";
-const urlsToCache = ["/", "/index.html", "/css/styles.css", "/js/app.js", "/images/icons/icon-192x192.png"];
+const urlsToCache = ["/", "/index.html", "/css/styles.css", "/js/app.js", "/static/media/icon-192x192.png"];
 
 // Instalar el Service Worker y cachear recursos
 self.addEventListener("install", (event) => {
