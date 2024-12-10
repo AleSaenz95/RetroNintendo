@@ -1,0 +1,12 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+      {
+        "label": "Start Ngrok",
+        "type": "shell",
+        "command": "ngrok http 5000",
+        "problemMatcher": []
+      }
+    ]
+  }
+  
